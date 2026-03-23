@@ -1,60 +1,24 @@
 {
   "meta": {
-    "version": 2,
-    "defaultOwner": "gpt",
-    "updatedAt": "2026-03-23T02:20:20.199Z"
+    "updatedAt": "2026-03-23T02:25:07.688Z"
   },
   "tasks": [
     {
-      "id": "task_taskboard_autonomy",
-      "title": "接入任务板驱动自动执行与完成通知",
+      "id": "task_1774232699525",
+      "title": "????????",
       "owner": "gpt",
-      "type": "ops",
-      "priority": 100,
+      "type": "general",
+      "priority": 50,
       "autoRun": true,
       "notifyOnComplete": true,
       "status": "done",
-      "notes": "目标：heartbeat 自动读取任务板，优先推进 in_progress/todo，完成后主动通知用户。",
-      "startedAt": "2026-03-23T02:14:00.000Z",
-      "updatedAt": "2026-03-23T02:20:20.199Z",
-      "createdAt": "2026-03-23T02:14:00.000Z",
-      "completedAt": "2026-03-23T02:20:20.199Z",
+      "notes": "???????????,?????? Telegram ????",
+      "startedAt": null,
+      "completedAt": "2026-03-23T02:25:07.688Z",
       "lastError": "",
-      "resultSummary": "???????????"
-    },
-    {
-      "id": "task_bootstrap_dashboard",
-      "title": "从零搭建 OpenClaw Agent Dashboard",
-      "owner": "gpt",
-      "type": "coding",
-      "priority": 90,
-      "autoRun": true,
-      "notifyOnComplete": true,
-      "status": "in_progress",
-      "notes": "目标：单控制器架构，展示 agent 状态、连接情况、已完成/未完成任务。",
-      "startedAt": "2026-03-23T02:14:00.000Z",
-      "updatedAt": "2026-03-23T02:14:00.000Z",
-      "createdAt": "2026-03-22T00:00:00.000Z",
-      "completedAt": null,
-      "lastError": "",
-      "resultSummary": ""
-    },
-    {
-      "id": "task_disable_extra_models",
-      "title": "停用除主 agent 外的其他模型",
-      "owner": "gpt",
-      "type": "ops",
-      "priority": 80,
-      "autoRun": true,
-      "notifyOnComplete": true,
-      "status": "done",
-      "notes": "已完成配置收口，只保留 gpt 作为默认对外 agent。",
-      "startedAt": "2026-03-23T02:14:00.000Z",
-      "updatedAt": "2026-03-23T02:14:00.000Z",
-      "createdAt": "2026-03-22T00:00:00.000Z",
-      "completedAt": "2026-03-23T02:14:00.000Z",
-      "lastError": "",
-      "resultSummary": "OpenClaw 已收口为单 agent，默认仅 gpt 在线路由。"
+      "resultSummary": "?? Telegram ??????",
+      "createdAt": "2026-03-23T02:24:59.525Z",
+      "updatedAt": "2026-03-23T02:25:07.688Z"
     }
   ]
 }

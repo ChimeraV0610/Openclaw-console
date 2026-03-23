@@ -83,9 +83,19 @@ function writeAutomation(data) {
 
 async function triggerCompletionNotification(task) {
   if (!task?.notifyOnComplete || task.status !== 'done') return;
+  const automation = readAutomation();
+  const notify = automation.notify || {};
   const summary = task.resultSummary || task.notes || task.title;
-  const text = `任务已完成：${task.title}。${summary}`;
+  const text = `任务已完成：${task.title}\n${summary}`;
   try {
+    if (notify.channel && notify.target) {
+      const args = ['message', 'send', '--channel', String(notify.channel), '--target', String(notify.target), '--message', text];
+      if (notify.account) args.splice(4, 0, '--account', String(notify.account));
+      await runOpenClaw(args);
+      automation.lastNotificationAt = new Date().toISOString();
+      writeAutomation(automation);
+      return;
+    }
     await runOpenClaw(['system', 'event', '--text', text, '--mode', 'now']);
   } catch (error) {
     console.error('Failed to trigger completion notification:', error.message);
@@ -197,6 +207,8 @@ const server = http.createServer(async (req, res) => {
       const sessionsJson = parseJsonSafe(sessionsRaw, {});
       const tasks = readTasks();
       const automation = readAutomation();
+      automation.lastHeartbeatRunAt = new Date().toISOString();
+      writeAutomation(automation);
       sendJson(res, 200, {
         fetchedAt: new Date().toISOString(),
         openclaw: {

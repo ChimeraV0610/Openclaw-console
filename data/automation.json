@@ -1,0 +1,11 @@
+{
+  "enabled": true,
+  "mode": "task-board",
+  "notify": {
+    "channel": "telegram",
+    "account": "gpt",
+    "target": "5236125169"
+  },
+  "lastHeartbeatRunAt": null,
+  "lastNotificationAt": "2026-03-23T02:25:14.006Z"
+}
