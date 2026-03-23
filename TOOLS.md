@@ -54,6 +54,11 @@ Friendly natural-language aliases:
 - `build: <task>` / `code: <task>` -> Dev
 - `social: <task>` -> Sam
 
-Full routing examples live in `ROUTER_CHEATSHEET.md`.
+Supervisor pipeline kickoff:
+- `Run full pipeline on <topic>`
+- `full pipeline: <topic>`
+- `/pipeline <topic>`
+
+Full routing examples live in `ROUTER_CHEATSHEET.md` and `SUPERVISOR_PIPELINE.md`.
 
 Add whatever helps you do your job. This is your cheat sheet.

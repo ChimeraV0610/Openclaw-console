@@ -182,3 +182,24 @@ Shortcut commands:
 - "Research this and then turn it into a blog" -> Alex first, then Maya
 - "Make a growth plan and then write the email sequence" -> Jordan first, then Maya
 - "Build the feature and then draft launch posts" -> Dev first, then Sam or Maya depending on output
+- "Run full pipeline on <topic>" -> Alex -> Maya -> Sam -> Jordan
+- "full pipeline: <topic>" -> Alex -> Maya -> Sam -> Jordan
+- "/pipeline <topic>" -> Alex -> Maya -> Sam -> Jordan
+
+## Full supervisor pipeline
+Use `SUPERVISOR_PIPELINE.md` for the standard content pipeline.
+
+Sequence:
+1. Alex researches the topic
+2. Alex passes findings to Maya
+3. Maya writes the blog/content
+4. Maya passes content to Sam
+5. Sam creates social media posts
+6. Sam passes to Jordan
+7. Jordan creates the promotion plan
+
+Automatic rule:
+If the user asks for the full pipeline in natural language, treat it as a multi-stage supervisor request and follow the sequence above.
+
+Manual rule:
+If the user explicitly names each agent, preserve the same handoff order unless they ask to skip a stage.

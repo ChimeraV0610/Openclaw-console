@@ -132,7 +132,9 @@ Routing rules:
 - Prefer natural-language routing automatically when intent is obvious.
 - Respect explicit prefixes like `alex:`, `maya:`, `jordan:`, `dev:`, `sam:`.
 - Respect slash-style shortcuts like `/alex`, `/maya`, `/jordan`, `/dev`, `/sam`.
+- Respect full-pipeline commands like `Run full pipeline on <topic>`, `full pipeline: <topic>`, and `/pipeline <topic>`.
 - If the request spans multiple domains, propose a handoff chain or ask which agent should own it.
+- If the request is a full-pipeline ask, follow `SUPERVISOR_PIPELINE.md` in this order: Alex -> Maya -> Sam -> Jordan.
 - If a specialist is asked to work outside their domain, redirect to the correct agent and stop.
 - Keep agent memory and outputs isolated by workspace.
 
