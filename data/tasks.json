@@ -2,7 +2,7 @@
   "meta": {
     "version": 2,
     "defaultOwner": "gpt",
-    "updatedAt": "2026-03-23T02:14:00.000Z"
+    "updatedAt": "2026-03-23T02:20:20.199Z"
   },
   "tasks": [
     {
@@ -13,14 +13,14 @@
       "priority": 100,
       "autoRun": true,
       "notifyOnComplete": true,
-      "status": "in_progress",
+      "status": "done",
       "notes": "目标：heartbeat 自动读取任务板，优先推进 in_progress/todo，完成后主动通知用户。",
       "startedAt": "2026-03-23T02:14:00.000Z",
-      "updatedAt": "2026-03-23T02:14:00.000Z",
+      "updatedAt": "2026-03-23T02:20:20.199Z",
       "createdAt": "2026-03-23T02:14:00.000Z",
-      "completedAt": null,
+      "completedAt": "2026-03-23T02:20:20.199Z",
       "lastError": "",
-      "resultSummary": ""
+      "resultSummary": "???????????"
     },
     {
       "id": "task_bootstrap_dashboard",

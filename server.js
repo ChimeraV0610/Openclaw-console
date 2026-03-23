@@ -81,6 +81,17 @@ function writeAutomation(data) {
   fs.writeFileSync(AUTOMATION_FILE, JSON.stringify(data, null, 2));
 }
 
+async function triggerCompletionNotification(task) {
+  if (!task?.notifyOnComplete || task.status !== 'done') return;
+  const summary = task.resultSummary || task.notes || task.title;
+  const text = `任务已完成：${task.title}。${summary}`;
+  try {
+    await runOpenClaw(['system', 'event', '--text', text, '--mode', 'now']);
+  } catch (error) {
+    console.error('Failed to trigger completion notification:', error.message);
+  }
+}
+
 function pickNextTask(tasks) {
   const list = tasks.tasks || [];
   const runnable = list.filter(task => task.autoRun && (task.status === 'in_progress' || task.status === 'todo'));
@@ -269,6 +280,7 @@ const server = http.createServer(async (req, res) => {
         sendJson(res, 404, { error: 'task not found' });
         return;
       }
+      const previousStatus = task.status;
       for (const key of ['title', 'owner', 'type', 'notes', 'status', 'lastError', 'resultSummary']) {
         if (input[key] !== undefined) task[key] = String(input[key]);
       }
@@ -280,8 +292,13 @@ const server = http.createServer(async (req, res) => {
       }
       if (input.startedAt !== undefined) task.startedAt = input.startedAt;
       if (input.completedAt !== undefined) task.completedAt = input.completedAt;
+      if (task.status === 'done' && !task.completedAt) task.completedAt = new Date().toISOString();
+      if (task.status === 'in_progress' && !task.startedAt) task.startedAt = new Date().toISOString();
       task.updatedAt = new Date().toISOString();
       writeTasks(tasks);
+      if (previousStatus !== 'done' && task.status === 'done' && task.notifyOnComplete) {
+        await triggerCompletionNotification(task);
+      }
       sendJson(res, 200, task);
       return;
     }
