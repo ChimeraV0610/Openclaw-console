@@ -157,6 +157,23 @@
         <div class="card"><div class="muted">未完成任务</div><div class="stat-value" id="pendingTasks">-</div></div>
       </div>
 
+      <div class="grid stats" style="margin-bottom:16px;">
+        <div class="card">
+          <div class="muted">自动执行</div>
+          <div class="stat-value" id="automationMode">-</div>
+          <p class="subtitle small" id="automationNextTask">载入中…</p>
+          <div class="chips">
+            <button class="btn" id="automationToggleBtn">切换自动执行</button>
+            <button class="btn" id="tickBtn">立即跑一轮</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="muted">最近 heartbeat</div>
+          <div class="stat-value" id="lastHeartbeat">-</div>
+          <p class="subtitle small" id="lastHeartbeatExact"></p>
+        </div>
+      </div>
+
       <div class="main">
         <div class="card">
           <div class="section-head">

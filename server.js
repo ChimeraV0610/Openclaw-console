@@ -46,7 +46,7 @@ function readBody(req) {
 function runOpenClaw(args) {
   return new Promise((resolve, reject) => {
     const quotedArgs = args.map(arg => /\s/.test(arg) ? `"${arg.replace(/"/g, '\\"')}"` : arg).join(' ');
-    exec(`openclaw ${quotedArgs}`, { timeout: 15000, windowsHide: true }, (error, stdout, stderr) => {
+    exec(`openclaw ${quotedArgs}`, { timeout: 20000, windowsHide: true }, (error, stdout, stderr) => {
       if (error) {
         reject(new Error(stderr || error.message));
         return;
@@ -58,7 +58,8 @@ function runOpenClaw(args) {
 
 function parseJsonSafe(text, fallback = null) {
   try {
-    return JSON.parse(text);
+    const normalized = typeof text === 'string' ? text.replace(/^\uFEFF/, '') : text;
+    return JSON.parse(normalized);
   } catch {
     return fallback;
   }
@@ -81,24 +82,40 @@ function writeAutomation(data) {
   fs.writeFileSync(AUTOMATION_FILE, JSON.stringify(data, null, 2));
 }
 
-async function triggerCompletionNotification(task) {
-  if (!task?.notifyOnComplete || task.status !== 'done') return;
+async function sendDirectNotification(text) {
   const automation = readAutomation();
   const notify = automation.notify || {};
+  if (!notify.channel || !notify.target) return false;
+  const args = ['message', 'send', '--channel', String(notify.channel), '--target', String(notify.target), '--message', text];
+  if (notify.account) args.splice(4, 0, '--account', String(notify.account));
+  await runOpenClaw(args);
+  automation.lastNotificationAt = new Date().toISOString();
+  writeAutomation(automation);
+  return true;
+}
+
+async function triggerCompletionNotification(task) {
+  if (!task?.notifyOnComplete || task.status !== 'done') return;
   const summary = task.resultSummary || task.notes || task.title;
   const text = `任务已完成：${task.title}\n${summary}`;
   try {
-    if (notify.channel && notify.target) {
-      const args = ['message', 'send', '--channel', String(notify.channel), '--target', String(notify.target), '--message', text];
-      if (notify.account) args.splice(4, 0, '--account', String(notify.account));
-      await runOpenClaw(args);
-      automation.lastNotificationAt = new Date().toISOString();
-      writeAutomation(automation);
-      return;
+    const sent = await sendDirectNotification(text);
+    if (!sent) {
+      await runOpenClaw(['system', 'event', '--text', text, '--mode', 'now']);
     }
-    await runOpenClaw(['system', 'event', '--text', text, '--mode', 'now']);
   } catch (error) {
     console.error('Failed to trigger completion notification:', error.message);
+  }
+}
+
+async function triggerBlockedNotification(task) {
+  if (task.status !== 'blocked') return;
+  const reason = task.lastError || '任务被阻塞，需要人工处理';
+  const text = `任务被阻塞：${task.title}\n${reason}`;
+  try {
+    await sendDirectNotification(text);
+  } catch (error) {
+    console.error('Failed to trigger blocked notification:', error.message);
   }
 }
 
@@ -168,6 +185,81 @@ function summarizeTasks(tasks) {
   };
 }
 
+function updateTaskFields(task, patch = {}) {
+  const previousStatus = task.status;
+  for (const key of ['title', 'owner', 'type', 'notes', 'status', 'lastError', 'resultSummary']) {
+    if (patch[key] !== undefined) task[key] = String(patch[key]);
+  }
+  for (const key of ['priority']) {
+    if (patch[key] !== undefined) task[key] = Number(patch[key]);
+  }
+  for (const key of ['autoRun', 'notifyOnComplete']) {
+    if (patch[key] !== undefined) task[key] = !!patch[key];
+  }
+  if (patch.startedAt !== undefined) task.startedAt = patch.startedAt;
+  if (patch.completedAt !== undefined) task.completedAt = patch.completedAt;
+  if (task.status === 'done' && !task.completedAt) task.completedAt = new Date().toISOString();
+  if (task.status === 'in_progress' && !task.startedAt) task.startedAt = new Date().toISOString();
+  task.updatedAt = new Date().toISOString();
+  return previousStatus;
+}
+
+async function runAutomationTick() {
+  const automation = readAutomation();
+  const tasks = readTasks();
+  const task = pickNextTask(tasks);
+  automation.lastHeartbeatRunAt = new Date().toISOString();
+
+  if (!automation.enabled) {
+    writeAutomation(automation);
+    return { ok: true, ran: false, reason: 'automation_disabled' };
+  }
+
+  if (!task) {
+    writeAutomation(automation);
+    return { ok: true, ran: false, reason: 'no_runnable_task' };
+  }
+
+  const now = new Date().toISOString();
+  if (task.status === 'todo') {
+    updateTaskFields(task, {
+      status: 'in_progress',
+      startedAt: now,
+      resultSummary: '自动执行器已接管该任务',
+      lastError: ''
+    });
+    writeTasks(tasks);
+    writeAutomation(automation);
+    return { ok: true, ran: true, action: 'started', task };
+  }
+
+  if (task.status === 'in_progress') {
+    const staleMs = now && task.updatedAt ? (Date.now() - new Date(task.updatedAt).getTime()) : 0;
+    if (staleMs > 20 * 60 * 1000) {
+      updateTaskFields(task, {
+        status: 'blocked',
+        lastError: '任务长时间无进展，已自动标记阻塞',
+        resultSummary: task.resultSummary || ''
+      });
+      writeTasks(tasks);
+      writeAutomation(automation);
+      await triggerBlockedNotification(task);
+      return { ok: true, ran: true, action: 'blocked', task };
+    }
+    updateTaskFields(task, {
+      status: 'in_progress',
+      resultSummary: `自动巡检继续推进中（${new Date().toLocaleString()}）`,
+      lastError: ''
+    });
+    writeTasks(tasks);
+    writeAutomation(automation);
+    return { ok: true, ran: true, action: 'continued', task };
+  }
+
+  writeAutomation(automation);
+  return { ok: true, ran: false, reason: 'unsupported_state' };
+}
+
 function serveStatic(req, res) {
   const requested = req.url === '/' ? '/index.html' : req.url;
   const filePath = path.join(PUBLIC_DIR, requested.replace(/^\//, ''));
@@ -207,8 +299,6 @@ const server = http.createServer(async (req, res) => {
       const sessionsJson = parseJsonSafe(sessionsRaw, {});
       const tasks = readTasks();
       const automation = readAutomation();
-      automation.lastHeartbeatRunAt = new Date().toISOString();
-      writeAutomation(automation);
       sendJson(res, 200, {
         fetchedAt: new Date().toISOString(),
         openclaw: {
@@ -238,12 +328,21 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
+    if (req.method === 'POST' && req.url === '/api/automation/tick') {
+      const result = await runAutomationTick();
+      sendJson(res, 200, result);
+      return;
+    }
+
     if (req.method === 'PATCH' && req.url === '/api/automation') {
       const body = await readBody(req);
       const input = parseJsonSafe(body, {});
       const automation = readAutomation();
       if (input.enabled !== undefined) automation.enabled = !!input.enabled;
       if (input.mode !== undefined) automation.mode = String(input.mode);
+      if (input.notify?.channel) automation.notify = { ...(automation.notify || {}), channel: String(input.notify.channel) };
+      if (input.notify?.target) automation.notify = { ...(automation.notify || {}), target: String(input.notify.target) };
+      if (input.notify?.account) automation.notify = { ...(automation.notify || {}), account: String(input.notify.account) };
       automation.updatedAt = new Date().toISOString();
       writeAutomation(automation);
       sendJson(res, 200, automation);
@@ -292,24 +391,13 @@ const server = http.createServer(async (req, res) => {
         sendJson(res, 404, { error: 'task not found' });
         return;
       }
-      const previousStatus = task.status;
-      for (const key of ['title', 'owner', 'type', 'notes', 'status', 'lastError', 'resultSummary']) {
-        if (input[key] !== undefined) task[key] = String(input[key]);
-      }
-      for (const key of ['priority']) {
-        if (input[key] !== undefined) task[key] = Number(input[key]);
-      }
-      for (const key of ['autoRun', 'notifyOnComplete']) {
-        if (input[key] !== undefined) task[key] = !!input[key];
-      }
-      if (input.startedAt !== undefined) task.startedAt = input.startedAt;
-      if (input.completedAt !== undefined) task.completedAt = input.completedAt;
-      if (task.status === 'done' && !task.completedAt) task.completedAt = new Date().toISOString();
-      if (task.status === 'in_progress' && !task.startedAt) task.startedAt = new Date().toISOString();
-      task.updatedAt = new Date().toISOString();
+      const previousStatus = updateTaskFields(task, input);
       writeTasks(tasks);
       if (previousStatus !== 'done' && task.status === 'done' && task.notifyOnComplete) {
         await triggerCompletionNotification(task);
+      }
+      if (previousStatus !== 'blocked' && task.status === 'blocked') {
+        await triggerBlockedNotification(task);
       }
       sendJson(res, 200, task);
       return;

@@ -2,6 +2,8 @@ const agentList = document.getElementById('agentList');
 const taskList = document.getElementById('taskList');
 const refreshBtn = document.getElementById('refreshBtn');
 const taskForm = document.getElementById('taskForm');
+const tickBtn = document.getElementById('tickBtn');
+const automationToggleBtn = document.getElementById('automationToggleBtn');
 
 function ageLabel(ms) {
   if (ms == null) return '未知';
@@ -13,6 +15,11 @@ function ageLabel(ms) {
   if (hour < 24) return `${hour} 小时前`;
   const day = Math.floor(hour / 24);
   return `${day} 天前`;
+}
+
+function timeAgoFromIso(iso) {
+  if (!iso) return '未记录';
+  return ageLabel(Date.now() - new Date(iso).getTime());
 }
 
 function chipClass(state) {
@@ -103,6 +110,16 @@ async function loadOverview() {
     ? `Gateway 已连接 · ${gateway.url} · 自动模式: ${automation.enabled ? '开启' : '关闭'}${nextTask ? ` · 下一任务: ${nextTask.title}` : ''}`
     : `Gateway 当前未直连（${gateway?.error || 'unknown'}）· 自动模式: ${automation.enabled ? '开启' : '关闭'}${nextTask ? ` · 下一任务: ${nextTask.title}` : ''}`;
 
+  document.getElementById('automationMode').textContent = automation.enabled ? '开启' : '关闭';
+  document.getElementById('automationNextTask').textContent = nextTask
+    ? `当前选中任务：${nextTask.title}（${nextTask.status}）`
+    : '当前没有可自动执行的任务';
+  document.getElementById('lastHeartbeat').textContent = timeAgoFromIso(automation.lastHeartbeatRunAt);
+  document.getElementById('lastHeartbeatExact').textContent = automation.lastHeartbeatRunAt
+    ? `上次运行：${new Date(automation.lastHeartbeatRunAt).toLocaleString()} · 最近通知：${automation.lastNotificationAt ? new Date(automation.lastNotificationAt).toLocaleString() : '-'}`
+    : '还没有 heartbeat 记录';
+  if (automationToggleBtn) automationToggleBtn.textContent = automation.enabled ? '关闭自动执行' : '开启自动执行';
+
   renderAgents(agents);
   renderTasks(data.tasks.tasks || []);
 }
@@ -139,6 +156,32 @@ taskForm.addEventListener('submit', async (event) => {
   await loadOverview();
 });
 
+if (tickBtn) {
+  tickBtn.addEventListener('click', async () => {
+    await fetch('/api/automation/tick', { method: 'POST' });
+    await loadOverview();
+  });
+}
+
+if (automationToggleBtn) {
+  automationToggleBtn.addEventListener('click', async () => {
+    const current = document.getElementById('automationMode').textContent === '开启';
+    await fetch('/api/automation', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ enabled: !current })
+    });
+    await loadOverview();
+  });
+}
+
 refreshBtn.addEventListener('click', loadOverview);
 loadOverview();
 setInterval(loadOverview, 15000);
+setInterval(async () => {
+  const current = document.getElementById('automationMode')?.textContent;
+  if (current === '开启') {
+    await fetch('/api/automation/tick', { method: 'POST' });
+    await loadOverview();
+  }
+}, 60000);

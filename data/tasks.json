@@ -1,24 +1,43 @@
 {
   "meta": {
-    "updatedAt": "2026-03-23T02:25:07.688Z"
+    "version": 2,
+    "defaultOwner": "gpt",
+    "updatedAt": "2026-03-23T02:30:38.200Z"
   },
   "tasks": [
     {
-      "id": "task_1774232699525",
-      "title": "????????",
+      "id": "task_autorun_test",
+      "title": "自动选任务推进测试",
       "owner": "gpt",
-      "type": "general",
-      "priority": 50,
+      "type": "ops",
+      "priority": 100,
       "autoRun": true,
       "notifyOnComplete": true,
-      "status": "done",
-      "notes": "???????????,?????? Telegram ????",
-      "startedAt": null,
-      "completedAt": "2026-03-23T02:25:07.688Z",
+      "status": "in_progress",
+      "notes": "用于测试自动 tick 是否会把 todo 改成 in_progress",
+      "startedAt": "2026-03-23T02:30:38.200Z",
+      "updatedAt": "2026-03-23T02:30:38.200Z",
+      "createdAt": "2026-03-23T02:30:00.000Z",
+      "completedAt": null,
       "lastError": "",
-      "resultSummary": "?? Telegram ??????",
-      "createdAt": "2026-03-23T02:24:59.525Z",
-      "updatedAt": "2026-03-23T02:25:07.688Z"
+      "resultSummary": "自动执行器已接管该任务"
+    },
+    {
+      "id": "task_block_test",
+      "title": "阻塞通知测试",
+      "owner": "gpt",
+      "type": "ops",
+      "priority": 90,
+      "autoRun": true,
+      "notifyOnComplete": true,
+      "status": "blocked",
+      "notes": "用于测试 blocked 通知",
+      "startedAt": "2026-03-23T01:00:00.000Z",
+      "updatedAt": "2026-03-23T02:30:21.212Z",
+      "createdAt": "2026-03-23T01:00:00.000Z",
+      "completedAt": null,
+      "lastError": "任务长时间无进展，已自动标记阻塞",
+      "resultSummary": ""
     }
   ]
 }
