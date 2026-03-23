@@ -39,6 +39,12 @@ Skills are shared. Your setup is yours. Keeping them apart means you can update 
 
 ## Router Shortcuts
 
+Main orchestrator behavior:
+- All natural-language requests come to GPT first
+- GPT decides whether Alex, Maya, Jordan, Dev, Sam, or the full supervisor pipeline should handle the work
+- The final answer returns to Telegram here by default
+- Discord channels are used for record-keeping when configured/available
+
 Use these quick command shortcuts for specialist routing:
 
 - `alex: <task>` or `/alex <task>` -> Alex (research)
