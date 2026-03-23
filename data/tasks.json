@@ -1,0 +1,22 @@
+{
+  "tasks": [
+    {
+      "id": "task_bootstrap_dashboard",
+      "title": "从零搭建 OpenClaw Agent Dashboard",
+      "owner": "gpt",
+      "status": "in_progress",
+      "notes": "目标：单控制器架构，展示 agent 状态、连接情况、已完成/未完成任务。",
+      "createdAt": "2026-03-22T00:00:00.000Z",
+      "updatedAt": "2026-03-22T00:00:00.000Z"
+    },
+    {
+      "id": "task_disable_extra_models",
+      "title": "停用除主 agent 外的其他模型",
+      "owner": "gpt",
+      "status": "todo",
+      "notes": "下一步做配置收口，只保留一个主 agent 对外服务。",
+      "createdAt": "2026-03-22T00:00:00.000Z",
+      "updatedAt": "2026-03-22T00:00:00.000Z"
+    }
+  ]
+}

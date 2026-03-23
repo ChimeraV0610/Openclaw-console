@@ -1,0 +1,11 @@
+{
+  "name": "openclaw-agent-dashboard",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Single-controller dashboard for OpenClaw agent status and task tracking",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  }
+}
