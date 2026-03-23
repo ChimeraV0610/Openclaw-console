@@ -8,10 +8,14 @@ const ROOT = __dirname;
 const PUBLIC_DIR = path.join(ROOT, 'public');
 const DATA_DIR = path.join(ROOT, 'data');
 const TASKS_FILE = path.join(DATA_DIR, 'tasks.json');
+const AUTOMATION_FILE = path.join(DATA_DIR, 'automation.json');
 
 fs.mkdirSync(DATA_DIR, { recursive: true });
 if (!fs.existsSync(TASKS_FILE)) {
   fs.writeFileSync(TASKS_FILE, JSON.stringify({ tasks: [] }, null, 2));
+}
+if (!fs.existsSync(AUTOMATION_FILE)) {
+  fs.writeFileSync(AUTOMATION_FILE, JSON.stringify({ enabled: true, mode: 'task-board', lastHeartbeatRunAt: null, lastNotificationAt: null }, null, 2));
 }
 
 function sendJson(res, statusCode, data) {
@@ -42,8 +46,7 @@ function readBody(req) {
 function runOpenClaw(args) {
   return new Promise((resolve, reject) => {
     const quotedArgs = args.map(arg => /\s/.test(arg) ? `"${arg.replace(/"/g, '\\"')}"` : arg).join(' ');
-    const binary = process.platform === 'win32' ? 'openclaw' : 'openclaw';
-    exec(`${binary} ${quotedArgs}`, { timeout: 15000, windowsHide: true }, (error, stdout, stderr) => {
+    exec(`openclaw ${quotedArgs}`, { timeout: 15000, windowsHide: true }, (error, stdout, stderr) => {
       if (error) {
         reject(new Error(stderr || error.message));
         return;
@@ -53,16 +56,40 @@ function runOpenClaw(args) {
   });
 }
 
-function readTasks() {
+function parseJsonSafe(text, fallback = null) {
   try {
-    return JSON.parse(fs.readFileSync(TASKS_FILE, 'utf8'));
+    return JSON.parse(text);
   } catch {
-    return { tasks: [] };
+    return fallback;
   }
 }
 
+function readTasks() {
+  return parseJsonSafe(fs.readFileSync(TASKS_FILE, 'utf8'), { meta: {}, tasks: [] });
+}
+
 function writeTasks(data) {
+  data.meta = { ...(data.meta || {}), updatedAt: new Date().toISOString() };
   fs.writeFileSync(TASKS_FILE, JSON.stringify(data, null, 2));
+}
+
+function readAutomation() {
+  return parseJsonSafe(fs.readFileSync(AUTOMATION_FILE, 'utf8'), { enabled: true, mode: 'task-board' });
+}
+
+function writeAutomation(data) {
+  fs.writeFileSync(AUTOMATION_FILE, JSON.stringify(data, null, 2));
+}
+
+function pickNextTask(tasks) {
+  const list = tasks.tasks || [];
+  const runnable = list.filter(task => task.autoRun && (task.status === 'in_progress' || task.status === 'todo'));
+  runnable.sort((a, b) => {
+    const aRank = a.status === 'in_progress' ? 1 : 0;
+    const bRank = b.status === 'in_progress' ? 1 : 0;
+    return bRank - aRank || (b.priority || 0) - (a.priority || 0) || new Date(a.createdAt || 0) - new Date(b.createdAt || 0);
+  });
+  return runnable[0] || null;
 }
 
 function inferAgentHealth(statusJson, sessionsJson) {
@@ -110,23 +137,14 @@ function inferAgentHealth(statusJson, sessionsJson) {
 
 function summarizeTasks(tasks) {
   const all = tasks.tasks || [];
-  const completed = all.filter(task => task.status === 'done').length;
-  const pending = all.filter(task => task.status !== 'done').length;
-  const inProgress = all.filter(task => task.status === 'in_progress').length;
   return {
     total: all.length,
-    completed,
-    pending,
-    inProgress
+    completed: all.filter(task => task.status === 'done').length,
+    pending: all.filter(task => task.status !== 'done').length,
+    inProgress: all.filter(task => task.status === 'in_progress').length,
+    blocked: all.filter(task => task.status === 'blocked').length,
+    runnable: all.filter(task => task.autoRun && (task.status === 'todo' || task.status === 'in_progress')).length
   };
-}
-
-function parseJsonSafe(text) {
-  try {
-    return JSON.parse(text);
-  } catch {
-    return null;
-  }
 }
 
 function serveStatic(req, res) {
@@ -164,15 +182,20 @@ const server = http.createServer(async (req, res) => {
         runOpenClaw(['status', '--json']),
         runOpenClaw(['sessions', '--all-agents', '--json'])
       ]);
-      const statusJson = parseJsonSafe(statusRaw);
-      const sessionsJson = parseJsonSafe(sessionsRaw);
+      const statusJson = parseJsonSafe(statusRaw, {});
+      const sessionsJson = parseJsonSafe(sessionsRaw, {});
       const tasks = readTasks();
+      const automation = readAutomation();
       sendJson(res, 200, {
         fetchedAt: new Date().toISOString(),
         openclaw: {
           status: statusJson,
           sessions: sessionsJson,
           agentHealth: inferAgentHealth(statusJson, sessionsJson)
+        },
+        automation: {
+          ...automation,
+          nextTask: pickNextTask(tasks)
         },
         tasks,
         taskSummary: summarizeTasks(tasks)
@@ -185,22 +208,50 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
+    if (req.method === 'GET' && req.url === '/api/automation') {
+      const tasks = readTasks();
+      const automation = readAutomation();
+      sendJson(res, 200, { ...automation, nextTask: pickNextTask(tasks) });
+      return;
+    }
+
+    if (req.method === 'PATCH' && req.url === '/api/automation') {
+      const body = await readBody(req);
+      const input = parseJsonSafe(body, {});
+      const automation = readAutomation();
+      if (input.enabled !== undefined) automation.enabled = !!input.enabled;
+      if (input.mode !== undefined) automation.mode = String(input.mode);
+      automation.updatedAt = new Date().toISOString();
+      writeAutomation(automation);
+      sendJson(res, 200, automation);
+      return;
+    }
+
     if (req.method === 'POST' && req.url === '/api/tasks') {
       const body = await readBody(req);
-      const input = parseJsonSafe(body);
+      const input = parseJsonSafe(body, {});
       if (!input?.title) {
         sendJson(res, 400, { error: 'title is required' });
         return;
       }
       const tasks = readTasks();
+      const now = new Date().toISOString();
       const task = {
         id: `task_${Date.now()}`,
         title: String(input.title),
         owner: input.owner ? String(input.owner) : 'gpt',
+        type: input.type ? String(input.type) : 'general',
+        priority: Number.isFinite(Number(input.priority)) ? Number(input.priority) : 50,
+        autoRun: input.autoRun !== undefined ? !!input.autoRun : true,
+        notifyOnComplete: input.notifyOnComplete !== undefined ? !!input.notifyOnComplete : true,
         status: input.status ? String(input.status) : 'todo',
         notes: input.notes ? String(input.notes) : '',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        startedAt: null,
+        completedAt: null,
+        lastError: '',
+        resultSummary: '',
+        createdAt: now,
+        updatedAt: now
       };
       tasks.tasks.unshift(task);
       writeTasks(tasks);
@@ -211,17 +262,24 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'PATCH' && req.url.startsWith('/api/tasks/')) {
       const id = decodeURIComponent(req.url.split('/').pop());
       const body = await readBody(req);
-      const input = parseJsonSafe(body) || {};
+      const input = parseJsonSafe(body, {});
       const tasks = readTasks();
       const task = tasks.tasks.find(item => item.id === id);
       if (!task) {
         sendJson(res, 404, { error: 'task not found' });
         return;
       }
-      if (input.title !== undefined) task.title = String(input.title);
-      if (input.owner !== undefined) task.owner = String(input.owner);
-      if (input.status !== undefined) task.status = String(input.status);
-      if (input.notes !== undefined) task.notes = String(input.notes);
+      for (const key of ['title', 'owner', 'type', 'notes', 'status', 'lastError', 'resultSummary']) {
+        if (input[key] !== undefined) task[key] = String(input[key]);
+      }
+      for (const key of ['priority']) {
+        if (input[key] !== undefined) task[key] = Number(input[key]);
+      }
+      for (const key of ['autoRun', 'notifyOnComplete']) {
+        if (input[key] !== undefined) task[key] = !!input[key];
+      }
+      if (input.startedAt !== undefined) task.startedAt = input.startedAt;
+      if (input.completedAt !== undefined) task.completedAt = input.completedAt;
       task.updatedAt = new Date().toISOString();
       writeTasks(tasks);
       sendJson(res, 200, task);

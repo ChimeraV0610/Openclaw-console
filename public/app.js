@@ -16,11 +16,10 @@ function ageLabel(ms) {
 }
 
 function chipClass(state) {
-  if (state === 'working') return 'green';
+  if (state === 'working' || state === 'done') return 'green';
   if (state === 'online') return 'blue';
-  if (state === 'offline') return 'red';
-  if (state === 'done') return 'green';
   if (state === 'in_progress') return 'yellow';
+  if (state === 'blocked' || state === 'offline') return 'red';
   return '';
 }
 
@@ -64,13 +63,22 @@ function renderTasks(tasks) {
       </div>
       <div class="chips">
         <span class="chip">owner: ${task.owner}</span>
+        <span class="chip">priority: ${task.priority ?? '-'}</span>
+        <span class="chip ${task.autoRun ? 'blue' : ''}">autoRun: ${task.autoRun ? 'on' : 'off'}</span>
+        <span class="chip ${task.notifyOnComplete ? 'green' : ''}">notify: ${task.notifyOnComplete ? 'on' : 'off'}</span>
+      </div>
+      <div class="chips">
         <span class="chip">updated: ${new Date(task.updatedAt).toLocaleString()}</span>
+        ${task.completedAt ? `<span class="chip green">completed: ${new Date(task.completedAt).toLocaleString()}</span>` : ''}
       </div>
       ${task.notes ? `<p class="muted small" style="margin-top:10px; line-height:1.5;">${task.notes}</p>` : ''}
+      ${task.lastError ? `<p class="muted small" style="margin-top:8px; color:#ffadad;">阻塞：${task.lastError}</p>` : ''}
+      ${task.resultSummary ? `<p class="muted small" style="margin-top:8px; color:#9ff0ba;">结果：${task.resultSummary}</p>` : ''}
       <div class="chips" style="margin-top:10px;">
-        ${task.status !== 'in_progress' ? `<button class="btn small-action" onclick="updateTask('${task.id}','in_progress')">标记进行中</button>` : ''}
-        ${task.status !== 'done' ? `<button class="btn small-action" onclick="updateTask('${task.id}','done')">标记完成</button>` : ''}
-        ${task.status !== 'todo' ? `<button class="btn small-action" onclick="updateTask('${task.id}','todo')">退回 todo</button>` : ''}
+        ${task.status !== 'in_progress' ? `<button class="btn" onclick="updateTask('${task.id}','in_progress')">标记进行中</button>` : ''}
+        ${task.status !== 'done' ? `<button class="btn" onclick="updateTask('${task.id}','done')">标记完成</button>` : ''}
+        ${task.status !== 'blocked' ? `<button class="btn" onclick="updateTask('${task.id}','blocked')">标记阻塞</button>` : ''}
+        ${task.status !== 'todo' ? `<button class="btn" onclick="updateTask('${task.id}','todo')">退回 todo</button>` : ''}
       </div>
     </div>
   `).join('');
@@ -89,19 +97,30 @@ async function loadOverview() {
   document.getElementById('pendingTasks').textContent = summary.pending;
 
   const gateway = data.openclaw.status?.gateway;
+  const automation = data.automation || {};
+  const nextTask = automation.nextTask;
   document.getElementById('gatewayStatus').textContent = gateway?.reachable
-    ? `Gateway 已连接 · ${gateway.url}`
-    : `Gateway 当前未直连（${gateway?.error || 'unknown'}）· 仍可通过 CLI 抓取状态`;
+    ? `Gateway 已连接 · ${gateway.url} · 自动模式: ${automation.enabled ? '开启' : '关闭'}${nextTask ? ` · 下一任务: ${nextTask.title}` : ''}`
+    : `Gateway 当前未直连（${gateway?.error || 'unknown'}）· 自动模式: ${automation.enabled ? '开启' : '关闭'}${nextTask ? ` · 下一任务: ${nextTask.title}` : ''}`;
 
   renderAgents(agents);
   renderTasks(data.tasks.tasks || []);
 }
 
 async function updateTask(id, status) {
+  const patch = { status };
+  if (status === 'done') {
+    patch.completedAt = new Date().toISOString();
+    patch.resultSummary = '已手动标记完成';
+    patch.lastError = '';
+  }
+  if (status === 'blocked') {
+    patch.lastError = '需要人工处理或更多上下文';
+  }
   await fetch(`/api/tasks/${encodeURIComponent(id)}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ status })
+    body: JSON.stringify(patch)
   });
   await loadOverview();
 }
