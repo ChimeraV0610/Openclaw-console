@@ -9,13 +9,52 @@ const PUBLIC_DIR = path.join(ROOT, 'public');
 const DATA_DIR = path.join(ROOT, 'data');
 const TASKS_FILE = path.join(DATA_DIR, 'tasks.json');
 const AUTOMATION_FILE = path.join(DATA_DIR, 'automation.json');
+const ACTIVITY_FILE = path.join(DATA_DIR, 'activity.json');
+const AGENTS_FILE = path.join(DATA_DIR, 'agents.json');
+const TRADING_FILE = path.join(DATA_DIR, 'trading.json');
+
+const DEFAULT_AUTOMATION = {
+  enabled: true,
+  mode: 'task-board',
+  lastHeartbeatRunAt: null,
+  lastNotificationAt: null
+};
+
+const DEFAULT_ACTIVITY = {
+  meta: { version: 1, updatedAt: null },
+  items: []
+};
+
+const DEFAULT_AGENT_DIRECTORY = {
+  meta: { version: 1, updatedAt: null },
+  teams: [],
+  profiles: []
+};
+
+const DEFAULT_TRADING = {
+  meta: { version: 1, updatedAt: null },
+  summary: {
+    mode: 'paper',
+    focus: 'Phase 1 trading shell',
+    lastUpdatedAt: null
+  },
+  watchlist: [],
+  executionQueue: [],
+  alerts: [],
+  theses: []
+};
 
 fs.mkdirSync(DATA_DIR, { recursive: true });
-if (!fs.existsSync(TASKS_FILE)) {
-  fs.writeFileSync(TASKS_FILE, JSON.stringify({ tasks: [] }, null, 2));
-}
-if (!fs.existsSync(AUTOMATION_FILE)) {
-  fs.writeFileSync(AUTOMATION_FILE, JSON.stringify({ enabled: true, mode: 'task-board', lastHeartbeatRunAt: null, lastNotificationAt: null }, null, 2));
+ensureJsonFile(TASKS_FILE, { tasks: [] });
+ensureJsonFile(AUTOMATION_FILE, DEFAULT_AUTOMATION);
+ensureJsonFile(ACTIVITY_FILE, DEFAULT_ACTIVITY);
+ensureJsonFile(AGENTS_FILE, DEFAULT_AGENT_DIRECTORY);
+ensureJsonFile(TRADING_FILE, DEFAULT_TRADING);
+
+function ensureJsonFile(filePath, fallback) {
+  if (!fs.existsSync(filePath)) {
+    fs.writeFileSync(filePath, JSON.stringify(fallback, null, 2));
+  }
 }
 
 function sendJson(res, statusCode, data) {
@@ -65,21 +104,90 @@ function parseJsonSafe(text, fallback = null) {
   }
 }
 
+function clone(data) {
+  return JSON.parse(JSON.stringify(data));
+}
+
+function readJsonFile(filePath, fallback) {
+  return parseJsonSafe(fs.readFileSync(filePath, 'utf8'), clone(fallback));
+}
+
+function writeJsonFile(filePath, data) {
+  fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+}
+
 function readTasks() {
-  return parseJsonSafe(fs.readFileSync(TASKS_FILE, 'utf8'), { meta: {}, tasks: [] });
+  const data = readJsonFile(TASKS_FILE, { meta: {}, tasks: [] });
+  data.meta = data.meta || {};
+  data.tasks = Array.isArray(data.tasks) ? data.tasks : [];
+  return data;
 }
 
 function writeTasks(data) {
   data.meta = { ...(data.meta || {}), updatedAt: new Date().toISOString() };
-  fs.writeFileSync(TASKS_FILE, JSON.stringify(data, null, 2));
+  writeJsonFile(TASKS_FILE, data);
 }
 
 function readAutomation() {
-  return parseJsonSafe(fs.readFileSync(AUTOMATION_FILE, 'utf8'), { enabled: true, mode: 'task-board' });
+  return readJsonFile(AUTOMATION_FILE, DEFAULT_AUTOMATION);
 }
 
 function writeAutomation(data) {
-  fs.writeFileSync(AUTOMATION_FILE, JSON.stringify(data, null, 2));
+  writeJsonFile(AUTOMATION_FILE, data);
+}
+
+function readActivity() {
+  const data = readJsonFile(ACTIVITY_FILE, DEFAULT_ACTIVITY);
+  data.meta = data.meta || {};
+  data.items = Array.isArray(data.items) ? data.items : [];
+  return data;
+}
+
+function writeActivity(data) {
+  data.meta = { ...(data.meta || {}), updatedAt: new Date().toISOString() };
+  writeJsonFile(ACTIVITY_FILE, data);
+}
+
+function readAgentDirectory() {
+  const data = readJsonFile(AGENTS_FILE, DEFAULT_AGENT_DIRECTORY);
+  data.meta = data.meta || {};
+  data.teams = Array.isArray(data.teams) ? data.teams : [];
+  data.profiles = Array.isArray(data.profiles) ? data.profiles : [];
+  return data;
+}
+
+function writeAgentDirectory(data) {
+  data.meta = { ...(data.meta || {}), updatedAt: new Date().toISOString() };
+  writeJsonFile(AGENTS_FILE, data);
+}
+
+function readTrading() {
+  const data = readJsonFile(TRADING_FILE, DEFAULT_TRADING);
+  data.meta = data.meta || {};
+  data.summary = data.summary || clone(DEFAULT_TRADING.summary);
+  data.watchlist = Array.isArray(data.watchlist) ? data.watchlist : [];
+  data.executionQueue = Array.isArray(data.executionQueue) ? data.executionQueue : [];
+  data.alerts = Array.isArray(data.alerts) ? data.alerts : [];
+  data.theses = Array.isArray(data.theses) ? data.theses : [];
+  return data;
+}
+
+function writeTrading(data) {
+  data.meta = { ...(data.meta || {}), updatedAt: new Date().toISOString() };
+  data.summary = {
+    ...(data.summary || {}),
+    lastUpdatedAt: new Date().toISOString()
+  };
+  writeJsonFile(TRADING_FILE, data);
+}
+
+function normalizeTask(task) {
+  return {
+    ...task,
+    page: task.page ? String(task.page) : 'tasks',
+    acceptance: Array.isArray(task.acceptance) ? task.acceptance.map(item => String(item)) : [],
+    tags: Array.isArray(task.tags) ? task.tags.map(item => String(item)) : []
+  };
 }
 
 async function sendDirectNotification(text) {
@@ -127,7 +235,7 @@ function pickNextTask(tasks) {
     const bRank = b.status === 'in_progress' ? 1 : 0;
     return bRank - aRank || (b.priority || 0) - (a.priority || 0) || new Date(a.createdAt || 0) - new Date(b.createdAt || 0);
   });
-  return runnable[0] || null;
+  return runnable[0] ? normalizeTask(runnable[0]) : null;
 }
 
 function inferAgentHealth(statusJson, sessionsJson) {
@@ -185,9 +293,25 @@ function summarizeTasks(tasks) {
   };
 }
 
+function summarizeTasksByPage(tasks) {
+  const pages = ['home', 'agents', 'tasks', 'trading'];
+  const summary = {};
+  for (const page of pages) {
+    const pageTasks = tasks.tasks.filter(task => (task.page || 'tasks') === page);
+    summary[page] = {
+      total: pageTasks.length,
+      inProgress: pageTasks.filter(task => task.status === 'in_progress').length,
+      blocked: pageTasks.filter(task => task.status === 'blocked').length,
+      done: pageTasks.filter(task => task.status === 'done').length,
+      topPriorityTask: pageTasks.sort((a, b) => (b.priority || 0) - (a.priority || 0))[0] || null
+    };
+  }
+  return summary;
+}
+
 function updateTaskFields(task, patch = {}) {
   const previousStatus = task.status;
-  for (const key of ['title', 'owner', 'type', 'notes', 'status', 'lastError', 'resultSummary']) {
+  for (const key of ['title', 'owner', 'type', 'notes', 'status', 'lastError', 'resultSummary', 'page']) {
     if (patch[key] !== undefined) task[key] = String(patch[key]);
   }
   for (const key of ['priority']) {
@@ -196,12 +320,136 @@ function updateTaskFields(task, patch = {}) {
   for (const key of ['autoRun', 'notifyOnComplete']) {
     if (patch[key] !== undefined) task[key] = !!patch[key];
   }
+  if (patch.acceptance !== undefined && Array.isArray(patch.acceptance)) {
+    task.acceptance = patch.acceptance.map(item => String(item));
+  }
+  if (patch.tags !== undefined && Array.isArray(patch.tags)) {
+    task.tags = patch.tags.map(item => String(item));
+  }
   if (patch.startedAt !== undefined) task.startedAt = patch.startedAt;
   if (patch.completedAt !== undefined) task.completedAt = patch.completedAt;
   if (task.status === 'done' && !task.completedAt) task.completedAt = new Date().toISOString();
   if (task.status === 'in_progress' && !task.startedAt) task.startedAt = new Date().toISOString();
   task.updatedAt = new Date().toISOString();
   return previousStatus;
+}
+
+function appendActivity(entry) {
+  const activity = readActivity();
+  const now = new Date().toISOString();
+  activity.items.unshift({
+    id: entry.id || `activity_${Date.now()}`,
+    type: entry.type || 'system',
+    title: entry.title || 'Activity',
+    summary: entry.summary || '',
+    page: entry.page || 'home',
+    owner: entry.owner || 'system',
+    status: entry.status || 'info',
+    importance: entry.importance || 'medium',
+    taskId: entry.taskId || null,
+    timestamp: entry.timestamp || now
+  });
+  activity.items = activity.items.slice(0, 100);
+  writeActivity(activity);
+}
+
+function buildAgentsView(agentHealth, directory, tasks) {
+  const profiles = directory.profiles || [];
+  const tasksByOwner = new Map();
+  for (const task of tasks.tasks || []) {
+    const list = tasksByOwner.get(task.owner) || [];
+    list.push(normalizeTask(task));
+    tasksByOwner.set(task.owner, list);
+  }
+
+  return profiles.map(profile => {
+    const health = agentHealth.find(item => item.id === profile.id) || null;
+    const ownedTasks = tasksByOwner.get(profile.id) || [];
+    return {
+      ...profile,
+      runtime: health,
+      taskCounts: {
+        total: ownedTasks.length,
+        inProgress: ownedTasks.filter(task => task.status === 'in_progress').length,
+        blocked: ownedTasks.filter(task => task.status === 'blocked').length,
+        done: ownedTasks.filter(task => task.status === 'done').length
+      },
+      nextTask: ownedTasks
+        .filter(task => task.status !== 'done')
+        .sort((a, b) => (b.priority || 0) - (a.priority || 0))[0] || null
+    };
+  });
+}
+
+function buildHomeSnapshot({ agentHealth, tasks, activity, trading, automation }) {
+  const allTasks = tasks.tasks.map(normalizeTask);
+  const nextTask = pickNextTask(tasks);
+  const urgentTasks = allTasks
+    .filter(task => task.status === 'blocked' || task.status === 'in_progress')
+    .sort((a, b) => (b.priority || 0) - (a.priority || 0))
+    .slice(0, 5);
+  const recentActivity = activity.items
+    .slice()
+    .sort((a, b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0))
+    .slice(0, 8);
+
+  return {
+    fetchedAt: new Date().toISOString(),
+    summary: {
+      automationEnabled: !!automation.enabled,
+      nextTask,
+      taskSummary: summarizeTasks(tasks),
+      pageSummary: summarizeTasksByPage(tasks),
+      onlineAgents: agentHealth.filter(agent => agent.state === 'working' || agent.state === 'online').length,
+      totalAgents: agentHealth.length,
+      openAlerts: (trading.alerts || []).filter(alert => alert.status !== 'closed').length,
+      activeWatchlist: (trading.watchlist || []).filter(item => item.status !== 'closed').length
+    },
+    urgentTasks,
+    recentActivity,
+    trading: {
+      summary: trading.summary,
+      topWatchlist: (trading.watchlist || []).slice(0, 5),
+      executionQueue: (trading.executionQueue || []).slice(0, 5),
+      alerts: (trading.alerts || []).slice(0, 5)
+    }
+  };
+}
+
+function buildOverviewPayload(statusJson, sessionsJson) {
+  const tasks = readTasks();
+  const automation = readAutomation();
+  const activity = readActivity();
+  const trading = readTrading();
+  const directory = readAgentDirectory();
+  const agentHealth = inferAgentHealth(statusJson, sessionsJson);
+
+  return {
+    fetchedAt: new Date().toISOString(),
+    openclaw: {
+      status: statusJson,
+      sessions: sessionsJson,
+      agentHealth
+    },
+    automation: {
+      ...automation,
+      nextTask: pickNextTask(tasks)
+    },
+    tasks: {
+      ...tasks,
+      tasks: tasks.tasks.map(normalizeTask)
+    },
+    taskSummary: summarizeTasks(tasks),
+    pages: {
+      home: buildHomeSnapshot({ agentHealth, tasks, activity, trading, automation }),
+      agents: {
+        teams: directory.teams,
+        profiles: buildAgentsView(agentHealth, directory, tasks),
+        activity: activity.items.slice(0, 20)
+      },
+      trading
+    }
+  };
 }
 
 async function runAutomationTick() {
@@ -221,39 +469,78 @@ async function runAutomationTick() {
   }
 
   const now = new Date().toISOString();
-  if (task.status === 'todo') {
-    updateTaskFields(task, {
+  const taskRef = tasks.tasks.find(item => item.id === task.id);
+  if (!taskRef) {
+    writeAutomation(automation);
+    return { ok: false, ran: false, reason: 'task_missing' };
+  }
+
+  if (taskRef.status === 'todo') {
+    updateTaskFields(taskRef, {
       status: 'in_progress',
       startedAt: now,
       resultSummary: '自动执行器已接管该任务',
       lastError: ''
     });
     writeTasks(tasks);
+    appendActivity({
+      type: 'automation',
+      title: 'Automation started task',
+      summary: taskRef.title,
+      page: taskRef.page || 'tasks',
+      owner: taskRef.owner || 'automation',
+      status: 'in_progress',
+      importance: 'high',
+      taskId: taskRef.id,
+      timestamp: now
+    });
     writeAutomation(automation);
-    return { ok: true, ran: true, action: 'started', task };
+    return { ok: true, ran: true, action: 'started', task: normalizeTask(taskRef) };
   }
 
-  if (task.status === 'in_progress') {
-    const staleMs = now && task.updatedAt ? (Date.now() - new Date(task.updatedAt).getTime()) : 0;
+  if (taskRef.status === 'in_progress') {
+    const staleMs = now && taskRef.updatedAt ? (Date.now() - new Date(taskRef.updatedAt).getTime()) : 0;
     if (staleMs > 20 * 60 * 1000) {
-      updateTaskFields(task, {
+      updateTaskFields(taskRef, {
         status: 'blocked',
         lastError: '任务长时间无进展，已自动标记阻塞',
-        resultSummary: task.resultSummary || ''
+        resultSummary: taskRef.resultSummary || ''
       });
       writeTasks(tasks);
+      appendActivity({
+        type: 'automation',
+        title: 'Automation blocked stale task',
+        summary: taskRef.title,
+        page: taskRef.page || 'tasks',
+        owner: taskRef.owner || 'automation',
+        status: 'blocked',
+        importance: 'high',
+        taskId: taskRef.id,
+        timestamp: now
+      });
       writeAutomation(automation);
-      await triggerBlockedNotification(task);
-      return { ok: true, ran: true, action: 'blocked', task };
+      await triggerBlockedNotification(taskRef);
+      return { ok: true, ran: true, action: 'blocked', task: normalizeTask(taskRef) };
     }
-    updateTaskFields(task, {
+    updateTaskFields(taskRef, {
       status: 'in_progress',
       resultSummary: `自动巡检继续推进中（${new Date().toLocaleString()}）`,
       lastError: ''
     });
     writeTasks(tasks);
+    appendActivity({
+      type: 'automation',
+      title: 'Automation heartbeat touched task',
+      summary: taskRef.title,
+      page: taskRef.page || 'tasks',
+      owner: taskRef.owner || 'automation',
+      status: 'in_progress',
+      importance: 'medium',
+      taskId: taskRef.id,
+      timestamp: now
+    });
     writeAutomation(automation);
-    return { ok: true, ran: true, action: 'continued', task };
+    return { ok: true, ran: true, action: 'continued', task: normalizeTask(taskRef) };
   }
 
   writeAutomation(automation);
@@ -297,27 +584,96 @@ const server = http.createServer(async (req, res) => {
       ]);
       const statusJson = parseJsonSafe(statusRaw, {});
       const sessionsJson = parseJsonSafe(sessionsRaw, {});
-      const tasks = readTasks();
-      const automation = readAutomation();
-      sendJson(res, 200, {
-        fetchedAt: new Date().toISOString(),
-        openclaw: {
-          status: statusJson,
-          sessions: sessionsJson,
-          agentHealth: inferAgentHealth(statusJson, sessionsJson)
-        },
-        automation: {
-          ...automation,
-          nextTask: pickNextTask(tasks)
-        },
-        tasks,
-        taskSummary: summarizeTasks(tasks)
-      });
+      sendJson(res, 200, buildOverviewPayload(statusJson, sessionsJson));
+      return;
+    }
+
+    if (req.method === 'GET' && req.url === '/api/home') {
+      const [statusRaw, sessionsRaw] = await Promise.all([
+        runOpenClaw(['status', '--json']),
+        runOpenClaw(['sessions', '--all-agents', '--json'])
+      ]);
+      const statusJson = parseJsonSafe(statusRaw, {});
+      const sessionsJson = parseJsonSafe(sessionsRaw, {});
+      const agentHealth = inferAgentHealth(statusJson, sessionsJson);
+      sendJson(res, 200, buildHomeSnapshot({
+        agentHealth,
+        tasks: readTasks(),
+        activity: readActivity(),
+        trading: readTrading(),
+        automation: readAutomation()
+      }));
       return;
     }
 
     if (req.method === 'GET' && req.url === '/api/tasks') {
-      sendJson(res, 200, readTasks());
+      const tasks = readTasks();
+      sendJson(res, 200, { ...tasks, tasks: tasks.tasks.map(normalizeTask) });
+      return;
+    }
+
+    if (req.method === 'GET' && req.url === '/api/agents') {
+      const [statusRaw, sessionsRaw] = await Promise.all([
+        runOpenClaw(['status', '--json']),
+        runOpenClaw(['sessions', '--all-agents', '--json'])
+      ]);
+      const statusJson = parseJsonSafe(statusRaw, {});
+      const sessionsJson = parseJsonSafe(sessionsRaw, {});
+      const agentHealth = inferAgentHealth(statusJson, sessionsJson);
+      const directory = readAgentDirectory();
+      const tasks = readTasks();
+      sendJson(res, 200, {
+        fetchedAt: new Date().toISOString(),
+        teams: directory.teams,
+        profiles: buildAgentsView(agentHealth, directory, tasks),
+        activity: readActivity().items.slice(0, 20)
+      });
+      return;
+    }
+
+    if (req.method === 'GET' && req.url === '/api/activity') {
+      sendJson(res, 200, readActivity());
+      return;
+    }
+
+    if (req.method === 'POST' && req.url === '/api/activity') {
+      const body = await readBody(req);
+      const input = parseJsonSafe(body, {});
+      if (!input?.title) {
+        sendJson(res, 400, { error: 'title is required' });
+        return;
+      }
+      appendActivity(input);
+      sendJson(res, 201, { ok: true });
+      return;
+    }
+
+    if (req.method === 'GET' && req.url === '/api/trading') {
+      sendJson(res, 200, readTrading());
+      return;
+    }
+
+    if (req.method === 'PATCH' && req.url === '/api/trading') {
+      const body = await readBody(req);
+      const input = parseJsonSafe(body, {});
+      const trading = readTrading();
+      if (input.summary && typeof input.summary === 'object') {
+        trading.summary = { ...trading.summary, ...input.summary };
+      }
+      for (const key of ['watchlist', 'executionQueue', 'alerts', 'theses']) {
+        if (Array.isArray(input[key])) trading[key] = input[key];
+      }
+      writeTrading(trading);
+      appendActivity({
+        type: 'trading',
+        title: 'Trading store updated',
+        summary: input.summary?.focus || 'Trading data changed',
+        page: 'trading',
+        owner: 'backend-engineer',
+        status: 'updated',
+        importance: 'medium'
+      });
+      sendJson(res, 200, trading);
       return;
     }
 
@@ -358,25 +714,39 @@ const server = http.createServer(async (req, res) => {
       }
       const tasks = readTasks();
       const now = new Date().toISOString();
-      const task = {
+      const task = normalizeTask({
         id: `task_${Date.now()}`,
         title: String(input.title),
         owner: input.owner ? String(input.owner) : 'gpt',
         type: input.type ? String(input.type) : 'general',
+        page: input.page ? String(input.page) : 'tasks',
         priority: Number.isFinite(Number(input.priority)) ? Number(input.priority) : 50,
         autoRun: input.autoRun !== undefined ? !!input.autoRun : true,
         notifyOnComplete: input.notifyOnComplete !== undefined ? !!input.notifyOnComplete : true,
         status: input.status ? String(input.status) : 'todo',
         notes: input.notes ? String(input.notes) : '',
+        acceptance: Array.isArray(input.acceptance) ? input.acceptance.map(item => String(item)) : [],
+        tags: Array.isArray(input.tags) ? input.tags.map(item => String(item)) : [],
         startedAt: null,
         completedAt: null,
         lastError: '',
         resultSummary: '',
         createdAt: now,
         updatedAt: now
-      };
+      });
       tasks.tasks.unshift(task);
       writeTasks(tasks);
+      appendActivity({
+        type: 'task',
+        title: 'Task created',
+        summary: task.title,
+        page: task.page,
+        owner: task.owner,
+        status: task.status,
+        importance: task.priority >= 90 ? 'high' : 'medium',
+        taskId: task.id,
+        timestamp: now
+      });
       sendJson(res, 201, task);
       return;
     }
@@ -393,13 +763,57 @@ const server = http.createServer(async (req, res) => {
       }
       const previousStatus = updateTaskFields(task, input);
       writeTasks(tasks);
+      appendActivity({
+        type: 'task',
+        title: 'Task updated',
+        summary: `${task.title} → ${task.status}`,
+        page: task.page || 'tasks',
+        owner: task.owner,
+        status: task.status,
+        importance: task.status === 'blocked' ? 'high' : 'medium',
+        taskId: task.id
+      });
       if (previousStatus !== 'done' && task.status === 'done' && task.notifyOnComplete) {
         await triggerCompletionNotification(task);
       }
       if (previousStatus !== 'blocked' && task.status === 'blocked') {
         await triggerBlockedNotification(task);
       }
-      sendJson(res, 200, task);
+      sendJson(res, 200, normalizeTask(task));
+      return;
+    }
+
+    if (req.method === 'GET' && req.url === '/api/plan/backend-phase1') {
+      sendJson(res, 200, {
+        objective: 'Extend the existing dashboard backend for Home / Agents / Tasks / Trading without a greenfield rewrite.',
+        stores: {
+          tasks: 'Existing task board + automation source of truth, now normalized with page / acceptance / tags support.',
+          activity: 'New append-only activity feed for Home and Agents summaries.',
+          agents: 'New agent directory for role/ownership metadata layered on top of live OpenClaw runtime health.',
+          trading: 'New trading shell store for watchlist, execution queue, alerts, and thesis panels.'
+        },
+        endpoints: [
+          'GET /api/overview',
+          'GET /api/home',
+          'GET /api/agents',
+          'GET /api/tasks',
+          'GET /api/activity',
+          'POST /api/activity',
+          'GET /api/trading',
+          'PATCH /api/trading',
+          'GET /api/automation',
+          'POST /api/automation/tick',
+          'PATCH /api/automation',
+          'POST /api/tasks',
+          'PATCH /api/tasks/:id'
+        ],
+        phase1Notes: [
+          'Home is composed from tasks + activity + trading + runtime health.',
+          'Agents merges static role metadata with live OpenClaw status/sessions.',
+          'Tasks keeps existing workflow compatible while allowing richer page-scoped planning.',
+          'Trading is intentionally a shell store for frontend iteration, not a live execution engine.'
+        ]
+      });
       return;
     }
 

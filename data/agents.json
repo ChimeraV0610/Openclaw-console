@@ -1,0 +1,60 @@
+{
+  "meta": {
+    "version": 1,
+    "updatedAt": "2026-03-26T04:16:00.000Z"
+  },
+  "teams": [
+    {
+      "id": "core-console",
+      "name": "Core Console",
+      "focus": "Phase 1 dashboard upgrade"
+    },
+    {
+      "id": "trading",
+      "name": "Trading",
+      "focus": "Research-to-execution workflow"
+    }
+  ],
+  "profiles": [
+    {
+      "id": "gpt",
+      "name": "GPT",
+      "role": "Orchestrator",
+      "team": "core-console",
+      "specialty": "Coordination, routing, integration",
+      "ownership": ["home", "cross-functional"],
+      "status": "active",
+      "priority": "high"
+    },
+    {
+      "id": "backend-engineer",
+      "name": "Backend Engineer",
+      "role": "API / data-store owner",
+      "team": "core-console",
+      "specialty": "server.js, JSON stores, contracts",
+      "ownership": ["agents", "tasks", "trading"],
+      "status": "active",
+      "priority": "high"
+    },
+    {
+      "id": "frontend-engineer",
+      "name": "Frontend Engineer",
+      "role": "Shell / page implementation",
+      "team": "core-console",
+      "specialty": "public/index.html, public/app.js",
+      "ownership": ["home", "agents", "tasks", "trading"],
+      "status": "active",
+      "priority": "high"
+    },
+    {
+      "id": "trading-fe",
+      "name": "Trading FE",
+      "role": "Workflow design",
+      "team": "trading",
+      "specialty": "Watchlist / execution flow",
+      "ownership": ["trading"],
+      "status": "active",
+      "priority": "medium"
+    }
+  ]
+}

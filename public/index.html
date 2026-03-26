@@ -4,217 +4,229 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>OpenClaw Agent Dashboard</title>
-    <style>
-      :root {
-        --bg: #0b1020;
-        --panel: #121a30;
-        --panel-2: #19233f;
-        --text: #e8ecf8;
-        --muted: #93a0c3;
-        --green: #22c55e;
-        --yellow: #f59e0b;
-        --red: #ef4444;
-        --blue: #60a5fa;
-        --border: rgba(255,255,255,0.08);
-      }
-      * { box-sizing: border-box; }
-      body {
-        margin: 0;
-        font-family: Inter, Segoe UI, system-ui, sans-serif;
-        background: linear-gradient(180deg, #0b1020 0%, #0f172a 100%);
-        color: var(--text);
-      }
-      .wrap {
-        max-width: 1280px;
-        margin: 0 auto;
-        padding: 24px;
-      }
-      h1, h2, h3, p { margin: 0; }
-      .topbar {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 16px;
-        margin-bottom: 20px;
-      }
-      .subtitle { color: var(--muted); margin-top: 6px; }
-      .btn {
-        border: 1px solid var(--border);
-        background: var(--panel-2);
-        color: var(--text);
-        padding: 10px 14px;
-        border-radius: 10px;
-        cursor: pointer;
-      }
-      .grid {
-        display: grid;
-        gap: 16px;
-      }
-      .stats {
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        margin-bottom: 16px;
-      }
-      .card {
-        background: rgba(18, 26, 48, 0.92);
-        border: 1px solid var(--border);
-        border-radius: 16px;
-        padding: 18px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-      }
-      .stat-value {
-        font-size: 30px;
-        font-weight: 700;
-        margin-top: 8px;
-      }
-      .muted { color: var(--muted); }
-      .main {
-        display: grid;
-        grid-template-columns: 1.4fr 1fr;
-        gap: 16px;
-      }
-      .agent-list, .task-list {
-        display: grid;
-        gap: 12px;
-        margin-top: 14px;
-      }
-      .agent, .task {
-        border: 1px solid var(--border);
-        border-radius: 14px;
-        padding: 14px;
-        background: rgba(255,255,255,0.03);
-      }
-      .row {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 12px;
-        flex-wrap: wrap;
-      }
-      .chips {
-        display: flex;
-        gap: 8px;
-        flex-wrap: wrap;
-        margin-top: 10px;
-      }
-      .chip {
-        font-size: 12px;
-        padding: 6px 10px;
-        border-radius: 999px;
-        background: rgba(255,255,255,0.08);
-        color: var(--text);
-      }
-      .chip.green { background: rgba(34,197,94,0.18); color: #9ff0ba; }
-      .chip.yellow { background: rgba(245,158,11,0.16); color: #ffd58a; }
-      .chip.red { background: rgba(239,68,68,0.18); color: #ffadad; }
-      .chip.blue { background: rgba(96,165,250,0.16); color: #b8d7ff; }
-      .section-head {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 10px;
-      }
-      .form {
-        display: grid;
-        gap: 10px;
-        margin-top: 14px;
-      }
-      input, textarea, select {
-        width: 100%;
-        background: #0d152b;
-        color: var(--text);
-        border: 1px solid var(--border);
-        border-radius: 10px;
-        padding: 10px 12px;
-      }
-      textarea { min-height: 88px; resize: vertical; }
-      .small { font-size: 12px; }
-      .danger-box {
-        margin-top: 16px;
-        border: 1px solid rgba(239,68,68,0.3);
-        background: rgba(239,68,68,0.08);
-        border-radius: 14px;
-        padding: 14px;
-      }
-      @media (max-width: 960px) {
-        .main { grid-template-columns: 1fr; }
-      }
-    </style>
+    <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
-    <div class="wrap">
-      <div class="topbar">
-        <div>
-          <h1>OpenClaw 单控制台</h1>
-          <p class="subtitle">从多模型混战切回一个清晰可控的 agent dashboard</p>
+    <div class="app-shell">
+      <aside class="sidebar card">
+        <div class="brand-block">
+          <p class="eyebrow">OpenClaw Console</p>
+          <h1>单控制台</h1>
+          <p class="subtitle">把现有 dashboard 收敛成 Home / Agents / Tasks / Trading 四页壳体。</p>
         </div>
-        <button class="btn" id="refreshBtn">刷新</button>
-      </div>
 
-      <div class="grid stats">
-        <div class="card"><div class="muted">主 Agent</div><div class="stat-value" id="primaryAgent">-</div></div>
-        <div class="card"><div class="muted">在线/工作中 Agent</div><div class="stat-value" id="onlineAgents">-</div></div>
-        <div class="card"><div class="muted">已完成任务</div><div class="stat-value" id="doneTasks">-</div></div>
-        <div class="card"><div class="muted">未完成任务</div><div class="stat-value" id="pendingTasks">-</div></div>
-      </div>
+        <nav class="nav" id="sidebarNav">
+          <button class="nav-btn active" data-view="home">
+            <span class="nav-label">Home</span>
+            <span class="nav-meta">总览 / triage</span>
+          </button>
+          <button class="nav-btn" data-view="agents">
+            <span class="nav-label">Agents</span>
+            <span class="nav-meta">状态 / workspace / heartbeat</span>
+          </button>
+          <button class="nav-btn" data-view="tasks">
+            <span class="nav-label">Tasks</span>
+            <span class="nav-meta">看板 / 手工维护 / 自动执行</span>
+          </button>
+          <button class="nav-btn" data-view="trading">
+            <span class="nav-label">Trading</span>
+            <span class="nav-meta">workflow shell / phase 1 placeholder</span>
+          </button>
+        </nav>
 
-      <div class="grid stats" style="margin-bottom:16px;">
-        <div class="card">
-          <div class="muted">自动执行</div>
-          <div class="stat-value" id="automationMode">-</div>
-          <p class="subtitle small" id="automationNextTask">载入中…</p>
-          <div class="chips">
+        <div class="sidebar-footer">
+          <div class="status-line">
+            <span class="status-dot" id="gatewayDot"></span>
+            <span id="gatewayMiniStatus">载入中…</span>
+          </div>
+          <div class="chips compact" id="sidebarChips">
+            <span class="chip">等待数据…</span>
+          </div>
+        </div>
+      </aside>
+
+      <main class="main-shell">
+        <header class="topbar card">
+          <div>
+            <p class="eyebrow" id="viewEyebrow">Console</p>
+            <h2 id="viewTitle">Home</h2>
+            <p class="subtitle" id="viewDescription">载入中…</p>
+          </div>
+          <div class="toolbar">
             <button class="btn" id="automationToggleBtn">切换自动执行</button>
             <button class="btn" id="tickBtn">立即跑一轮</button>
+            <button class="btn" id="refreshBtn">刷新</button>
           </div>
-        </div>
-        <div class="card">
-          <div class="muted">最近 heartbeat</div>
-          <div class="stat-value" id="lastHeartbeat">-</div>
-          <p class="subtitle small" id="lastHeartbeatExact"></p>
-        </div>
-      </div>
+        </header>
 
-      <div class="main">
-        <div class="card">
-          <div class="section-head">
-            <div>
-              <h2>Agent 状态</h2>
-              <p class="muted small" id="gatewayStatus">载入中…</p>
-            </div>
-          </div>
-          <div class="agent-list" id="agentList"></div>
-
-          <div class="danger-box">
-            <strong>当前重构策略</strong>
-            <p class="muted small" style="margin-top:8px; line-height:1.5;">
-              先把系统收敛成一个主控制器 + 可视化状态面板。这个版本已经直接读取 OpenClaw CLI 数据，后续我可以继续接“停用非主模型 / 配置收口 / 一键重启网关”。
-            </p>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="section-head">
-            <div>
-              <h2>任务看板</h2>
-              <p class="muted small">手工维护任务，和 OpenClaw 状态一起看</p>
-            </div>
+        <section class="view active" data-view-panel="home">
+          <div class="grid stats-grid">
+            <div class="card stat-card"><div class="muted">主 Agent</div><div class="stat-value" id="primaryAgent">-</div></div>
+            <div class="card stat-card"><div class="muted">在线/工作中 Agent</div><div class="stat-value" id="onlineAgents">-</div></div>
+            <div class="card stat-card"><div class="muted">已完成任务</div><div class="stat-value" id="doneTasks">-</div></div>
+            <div class="card stat-card"><div class="muted">未完成任务</div><div class="stat-value" id="pendingTasks">-</div></div>
           </div>
 
-          <form class="form" id="taskForm">
-            <input name="title" placeholder="新任务标题" required />
-            <input name="owner" placeholder="负责人（默认 gpt）" />
-            <select name="status">
-              <option value="todo">todo</option>
-              <option value="in_progress">in_progress</option>
-              <option value="done">done</option>
-            </select>
-            <textarea name="notes" placeholder="任务备注 / 验收条件"></textarea>
-            <button class="btn" type="submit">添加任务</button>
-          </form>
+          <div class="grid home-grid">
+            <section class="card panel">
+              <div class="section-head">
+                <div>
+                  <h3>自动执行面板</h3>
+                  <p class="muted small">保留现有 automation 能力，放到 Home 当值班台。</p>
+                </div>
+              </div>
+              <div class="key-metrics two-col">
+                <div class="metric-block">
+                  <div class="muted">自动执行</div>
+                  <div class="stat-value compact" id="automationMode">-</div>
+                  <p class="subtitle small" id="automationNextTask">载入中…</p>
+                </div>
+                <div class="metric-block">
+                  <div class="muted">最近 heartbeat</div>
+                  <div class="stat-value compact" id="lastHeartbeat">-</div>
+                  <p class="subtitle small" id="lastHeartbeatExact"></p>
+                </div>
+              </div>
+            </section>
 
-          <div class="task-list" id="taskList"></div>
-        </div>
-      </div>
+            <section class="card panel">
+              <div class="section-head">
+                <div>
+                  <h3>下一步 / 当前焦点</h3>
+                  <p class="muted small">给 orchestrator 一个马上能判断的 summary。</p>
+                </div>
+              </div>
+              <div id="homeFocus" class="stack-list empty-state">载入中…</div>
+            </section>
+
+            <section class="card panel panel-span-2">
+              <div class="section-head">
+                <div>
+                  <h3>阶段备注</h3>
+                  <p class="muted small">Phase 1 先交付四页壳体，Research / Operations / System / Files 延后。</p>
+                </div>
+              </div>
+              <div class="info-grid" id="homeNotes">
+                <div class="info-item">
+                  <span class="info-label">当前重构策略</span>
+                  <p class="muted small">先把系统收敛成一个主控制器 + 可视化状态面板；保留现有 overview/task workflow，不做 greenfield 重写。</p>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Trading shell</span>
+                  <p class="muted small">本轮先搭 layout 和数据占位，等 backend domain API 与 trading workflow 定稿后再接真实执行流。</p>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Core acceptance</span>
+                  <p class="muted small">左侧导航四入口、页面壳体可切换、任务/API 功能继续可用。</p>
+                </div>
+              </div>
+            </section>
+          </div>
+        </section>
+
+        <section class="view" data-view-panel="agents">
+          <div class="grid single-grid">
+            <section class="card panel">
+              <div class="section-head">
+                <div>
+                  <h3>Agent 状态</h3>
+                  <p class="muted small" id="gatewayStatus">载入中…</p>
+                </div>
+              </div>
+              <div class="agent-list" id="agentList"></div>
+            </section>
+          </div>
+        </section>
+
+        <section class="view" data-view-panel="tasks">
+          <div class="grid tasks-grid">
+            <section class="card panel">
+              <div class="section-head">
+                <div>
+                  <h3>新建任务</h3>
+                  <p class="muted small">延续现有手工任务录入能力。</p>
+                </div>
+              </div>
+              <form class="form" id="taskForm">
+                <input name="title" placeholder="新任务标题" required />
+                <input name="owner" placeholder="负责人（默认 gpt）" />
+                <select name="status">
+                  <option value="todo">todo</option>
+                  <option value="in_progress">in_progress</option>
+                  <option value="done">done</option>
+                </select>
+                <textarea name="notes" placeholder="任务备注 / 验收条件"></textarea>
+                <button class="btn" type="submit">添加任务</button>
+              </form>
+            </section>
+
+            <section class="card panel">
+              <div class="section-head">
+                <div>
+                  <h3>任务看板</h3>
+                  <p class="muted small">看当前交付状态、阻塞和结果摘要。</p>
+                </div>
+              </div>
+              <div class="task-list" id="taskList"></div>
+            </section>
+          </div>
+        </section>
+
+        <section class="view" data-view-panel="trading">
+          <div class="grid trading-grid">
+            <section class="card panel trading-hero">
+              <div class="section-head">
+                <div>
+                  <h3>Trading workflow shell</h3>
+                  <p class="muted small">Phase 1 先把 trader 工作区框架放出来，不阻塞后续 API / UX 细化。</p>
+                </div>
+                <span class="chip blue">phase 1</span>
+              </div>
+              <div class="trading-summary" id="tradingSummary"></div>
+            </section>
+
+            <section class="card panel">
+              <div class="section-head">
+                <div>
+                  <h3>Watchlist / 优先观察</h3>
+                  <p class="muted small">先从高优先级未完成任务映射，后续换真实 market 数据。</p>
+                </div>
+              </div>
+              <div class="stack-list" id="tradingWatchlist"></div>
+            </section>
+
+            <section class="card panel">
+              <div class="section-head">
+                <div>
+                  <h3>Execution queue</h3>
+                  <p class="muted small">给 trader 一个马上能处理的动作队列。</p>
+                </div>
+              </div>
+              <div class="stack-list" id="executionQueue"></div>
+            </section>
+
+            <section class="card panel">
+              <div class="section-head">
+                <div>
+                  <h3>Linked tasks</h3>
+                  <p class="muted small">连接当前任务系统，避免 trading 页面变成空壳。</p>
+                </div>
+              </div>
+              <div class="stack-list" id="linkedTasks"></div>
+            </section>
+
+            <section class="card panel">
+              <div class="section-head">
+                <div>
+                  <h3>Alerts / Risks</h3>
+                  <p class="muted small">先用 blocked / stale / offline 信号构成风险区。</p>
+                </div>
+              </div>
+              <div class="stack-list" id="tradingAlerts"></div>
+            </section>
+          </div>
+        </section>
+      </main>
     </div>
 
     <script src="/app.js"></script>

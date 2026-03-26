@@ -1,0 +1,61 @@
+{
+  "meta": {
+    "version": 1,
+    "updatedAt": "2026-03-26T04:16:00.000Z"
+  },
+  "summary": {
+    "mode": "paper",
+    "focus": "Build the phase-1 trading console shell before live execution complexity.",
+    "lastUpdatedAt": "2026-03-26T04:16:00.000Z"
+  },
+  "watchlist": [
+    {
+      "id": "wl_phase1_console",
+      "symbol": "CONSOLE-PH1",
+      "market": "internal",
+      "bias": "build",
+      "status": "active",
+      "conviction": 0.76,
+      "price": null,
+      "move1hPct": null,
+      "thesis": "Phase 1 console should prioritize Home / Agents / Tasks / Trading without a greenfield rewrite.",
+      "catalyst": "Cross-agent coordination and backend/frontend contract alignment",
+      "linkedTaskIds": ["task_phase1_backend_domain_api", "task_phase1_frontend_shell"],
+      "updatedAt": "2026-03-26T04:16:00.000Z"
+    }
+  ],
+  "executionQueue": [
+    {
+      "id": "exec_backend_contracts",
+      "title": "Ship initial Home / Agents / Trading contracts",
+      "status": "queued",
+      "priority": "high",
+      "owner": "backend-engineer",
+      "linkedTaskId": "task_phase1_backend_domain_api",
+      "notes": "Add stable JSON-backed routes first so the frontend can build against fixed shapes.",
+      "updatedAt": "2026-03-26T04:16:00.000Z"
+    }
+  ],
+  "alerts": [
+    {
+      "id": "alert_contract_drift",
+      "severity": "medium",
+      "title": "Avoid backend/frontend contract drift",
+      "source": "phase1",
+      "status": "open",
+      "linkedTaskIds": ["task_phase1_backend_domain_api", "task_phase1_frontend_shell"],
+      "updatedAt": "2026-03-26T04:16:00.000Z"
+    }
+  ],
+  "theses": [
+    {
+      "id": "thesis_phase1_console",
+      "title": "Dashboard-first trading shell",
+      "status": "active",
+      "confidence": 0.74,
+      "summary": "The existing dashboard already has a task/automation backbone, so phase 1 should layer trader workflow panels on top of that baseline.",
+      "linkedTaskIds": ["task_phase1_backend_domain_api", "task_phase1_trading_fe_workflow"],
+      "updatedAt": "2026-03-26T04:16:00.000Z"
+    }
+  ]
+}

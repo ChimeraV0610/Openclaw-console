@@ -1,0 +1,32 @@
+{
+  "meta": {
+    "version": 1,
+    "updatedAt": "2026-03-26T04:16:00.000Z"
+  },
+  "items": [
+    {
+      "id": "activity_phase1_coordination",
+      "type": "project",
+      "title": "Phase 1 console coordination started",
+      "summary": "Home / Agents / Tasks / Trading are the four priority pages for the in-place dashboard upgrade.",
+      "page": "home",
+      "owner": "gpt",
+      "status": "in_progress",
+      "importance": "high",
+      "taskId": "task_phase1_orchestrator_coordination",
+      "timestamp": "2026-03-26T03:59:00.000Z"
+    },
+    {
+      "id": "activity_backend_phase1_scope",
+      "type": "backend",
+      "title": "Backend phase-1 domain API scoped",
+      "summary": "Server should add Home / Agents / Trading domain contracts without replacing the current task board workflow.",
+      "page": "trading",
+      "owner": "backend-engineer",
+      "status": "todo",
+      "importance": "high",
+      "taskId": "task_phase1_backend_domain_api",
+      "timestamp": "2026-03-26T04:16:00.000Z"
+    }
+  ]
+}
