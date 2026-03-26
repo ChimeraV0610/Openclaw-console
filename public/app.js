@@ -32,6 +32,9 @@ const viewMeta = {
 
 let latestOverview = null;
 let currentView = 'home';
+let selectedTradingItemId = null;
+const BASE_PATH = (window.__BASE_PATH__ || '').replace(/\/$/, '');
+const apiPath = (path) => `${BASE_PATH}${path}`;
 
 function ageLabel(ms) {
   if (ms == null || Number.isNaN(ms)) return '未知';
@@ -206,14 +209,38 @@ function renderHome(data) {
 function renderTrading(data) {
   const tasks = [...(data.tasks?.tasks || [])];
   const agents = data.openclaw?.agentHealth || [];
-  const watchlist = tasks
-    .filter((task) => task.status !== 'done')
-    .sort((a, b) => (b.priority ?? 0) - (a.priority ?? 0))
-    .slice(0, 4);
-  const executionQueue = tasks
-    .filter((task) => task.status === 'in_progress' || task.autoRun)
-    .sort((a, b) => (b.priority ?? 0) - (a.priority ?? 0))
-    .slice(0, 4);
+  const tradingStore = data.pages?.trading || data.trading || {};
+  const watchlist = (Array.isArray(tradingStore.watchlist) && tradingStore.watchlist.length
+    ? tradingStore.watchlist.map((item, index) => ({
+        id: item.id || `watch_${index}`,
+        title: item.symbol || item.title || `Watch ${index + 1}`,
+        status: item.bias || 'watch',
+        owner: item.owner || 'trading-desk',
+        notes: item.summary || item.catalyst || 'Awaiting deeper market data',
+        page: 'trading',
+        priority: item.priority ?? 70,
+        instrument: item.instrument || 'market',
+        timeframe: item.timeframe || 'active'
+      }))
+    : tasks
+        .filter((task) => task.status !== 'done')
+        .sort((a, b) => (b.priority ?? 0) - (a.priority ?? 0))
+        .slice(0, 4));
+  const executionQueue = (Array.isArray(tradingStore.executionQueue) && tradingStore.executionQueue.length
+    ? tradingStore.executionQueue.map((item, index) => ({
+        id: item.id || `queue_${index}`,
+        title: item.symbol || item.title || `Queue ${index + 1}`,
+        status: item.status || 'queued',
+        owner: item.owner || 'trading-desk',
+        notes: item.trigger || item.summary || 'Waiting for trigger',
+        page: 'trading',
+        priority: item.priority ?? 65,
+        nextAction: item.nextAction || 'Review setup'
+      }))
+    : tasks
+        .filter((task) => task.status === 'in_progress' || task.autoRun)
+        .sort((a, b) => (b.priority ?? 0) - (a.priority ?? 0))
+        .slice(0, 4));
   const tradingTagged = tasks.filter((task) => task.page === 'trading' || /trading/i.test(task.owner || '') || /trading/i.test(task.title || ''));
   const alerts = [
     ...tasks.filter((task) => task.status === 'blocked').map((task) => ({
@@ -257,19 +284,46 @@ function renderTrading(data) {
     </div>
   `).join('');
 
+  if (!selectedTradingItemId || !watchlist.some((item) => item.id === selectedTradingItemId)) {
+    selectedTradingItemId = watchlist[0]?.id || null;
+  }
+  const selectedTradingItem = watchlist.find((item) => item.id === selectedTradingItemId) || executionQueue.find((item) => item.id === selectedTradingItemId) || null;
+
   renderCardList('tradingWatchlist', watchlist, (task) => ({
     title: task.title,
     badge: task.priority ?? '-',
-    badgeTone: task.status,
-    body: `${task.owner || '-'} · ${task.status} · ${task.notes || '等待更具体的 market / thesis 数据'}`
+    badgeTone: task.id === selectedTradingItemId ? 'green' : task.status,
+    body: `${task.owner || '-'} · ${task.status} · ${task.notes || '等待更具体的 market / thesis 数据'}`,
+    active: task.id === selectedTradingItemId,
+    dataId: task.id
   }), '暂无 watchlist 数据，后续接 trading domain API。');
 
   renderCardList('executionQueue', executionQueue, (task) => ({
     title: task.title,
     badge: task.status,
     badgeTone: task.status,
-    body: `${task.owner || '-'} · autoRun ${task.autoRun ? 'on' : 'off'} · updated ${timeAgoFromIso(task.updatedAt)}`
+    body: `${task.owner || '-'} · ${task.nextAction || `autoRun ${task.autoRun ? 'on' : 'off'}`} · updated ${timeAgoFromIso(task.updatedAt)}`,
+    active: task.id === selectedTradingItemId,
+    dataId: task.id
   }), '目前没有活跃执行项。');
+
+  const thesisRoot = document.getElementById('tradingThesis');
+  if (thesisRoot) {
+    thesisRoot.innerHTML = selectedTradingItem
+      ? `
+        <div class="list-card list-card-active">
+          <div class="list-card-title">
+            <strong>${escapeHtml(selectedTradingItem.title)}</strong>
+            <span class="chip ${chipClass(selectedTradingItem.status || 'blue')}">${escapeHtml(selectedTradingItem.status || 'watch')}</span>
+          </div>
+          <p class="muted small"><strong>Owner:</strong> ${escapeHtml(selectedTradingItem.owner || '-')}</p>
+          <p class="muted small"><strong>Thesis:</strong> ${escapeHtml(selectedTradingItem.notes || '当前还没有完整 thesis，后续接 Trading domain API 与 Trading FE workflow。')}</p>
+          <p class="muted small"><strong>Next action:</strong> ${escapeHtml(selectedTradingItem.nextAction || 'Review setup / confirm trigger / link task')}</p>
+          <p class="muted small"><strong>Why now:</strong> ${escapeHtml(selectedTradingItem.timeframe || selectedTradingItem.instrument || 'active context')}</p>
+        </div>
+      `
+      : '<div class="empty-state">先从 watchlist 选择一个对象，再在这里查看 thesis / next action。</div>';
+  }
 
   renderCardList('linkedTasks', tradingTagged.length ? tradingTagged : watchlist, (task) => ({
     title: task.title,
@@ -297,13 +351,13 @@ function renderCardList(elementId, items, mapper, emptyText) {
   root.innerHTML = items.map((item) => {
     const mapped = mapper(item);
     return `
-      <div class="list-card">
+      <button class="list-card list-card-button ${mapped.active ? 'list-card-active' : ''}" ${mapped.dataId ? `data-trading-select="${escapeHtml(mapped.dataId)}"` : ''}>
         <div class="list-card-title">
           <strong>${escapeHtml(mapped.title)}</strong>
           <span class="chip ${chipClass(mapped.badgeTone)}">${escapeHtml(mapped.badge)}</span>
         </div>
         <p class="muted small">${escapeHtml(mapped.body)}</p>
-      </div>
+      </button>
     `;
   }).join('');
 }
@@ -325,7 +379,7 @@ function updateSidebar(data) {
 }
 
 async function loadOverview() {
-  const res = await fetch('/api/overview');
+  const res = await fetch(apiPath('/api/overview'));
   const data = await res.json();
   latestOverview = data;
 
@@ -389,7 +443,7 @@ taskForm.addEventListener('submit', async (event) => {
   event.preventDefault();
   const formData = new FormData(taskForm);
   const payload = Object.fromEntries(formData.entries());
-  await fetch('/api/tasks', {
+  await fetch(apiPath('/api/tasks'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload)
@@ -402,9 +456,16 @@ navButtons.forEach((button) => {
   button.addEventListener('click', () => setView(button.dataset.view));
 });
 
+document.addEventListener('click', (event) => {
+  const target = event.target.closest('[data-trading-select]');
+  if (!target) return;
+  selectedTradingItemId = target.getAttribute('data-trading-select');
+  if (latestOverview) renderTrading(latestOverview);
+});
+
 if (tickBtn) {
   tickBtn.addEventListener('click', async () => {
-    await fetch('/api/automation/tick', { method: 'POST' });
+    await fetch(apiPath('/api/automation/tick'), { method: 'POST' });
     await loadOverview();
   });
 }
@@ -412,7 +473,7 @@ if (tickBtn) {
 if (automationToggleBtn) {
   automationToggleBtn.addEventListener('click', async () => {
     const current = document.getElementById('automationMode').textContent === '开启';
-    await fetch('/api/automation', {
+    await fetch(apiPath('/api/automation'), {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ enabled: !current })
@@ -428,7 +489,7 @@ setInterval(loadOverview, 15000);
 setInterval(async () => {
   const current = document.getElementById('automationMode')?.textContent;
   if (current === '开启') {
-    await fetch('/api/automation/tick', { method: 'POST' });
+    await fetch(apiPath('/api/automation/tick'), { method: 'POST' });
     await loadOverview();
   }
 }, 60000);

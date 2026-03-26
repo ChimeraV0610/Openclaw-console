@@ -4,6 +4,8 @@ const path = require('path');
 const { exec } = require('child_process');
 
 const PORT = process.env.PORT || 3187;
+const HOST = process.env.HOST || '127.0.0.1';
+const BASE_PATH = ((process.env.BASE_PATH || '').trim().replace(/\/+$/, '')) || '';
 const ROOT = __dirname;
 const PUBLIC_DIR = path.join(ROOT, 'public');
 const DATA_DIR = path.join(ROOT, 'data');
@@ -60,6 +62,15 @@ function ensureJsonFile(filePath, fallback) {
 function sendJson(res, statusCode, data) {
   res.writeHead(statusCode, { 'Content-Type': 'application/json; charset=utf-8' });
   res.end(JSON.stringify(data, null, 2));
+}
+
+function normalizeRequestPath(url) {
+  const raw = (url || '/').split('?')[0] || '/';
+  if (BASE_PATH) {
+    if (raw === BASE_PATH) return '/';
+    if (raw.startsWith(`${BASE_PATH}/`)) return raw.slice(BASE_PATH.length) || '/';
+  }
+  return raw;
 }
 
 function sendText(res, statusCode, text, contentType = 'text/plain; charset=utf-8') {
@@ -547,8 +558,8 @@ async function runAutomationTick() {
   return { ok: true, ran: false, reason: 'unsupported_state' };
 }
 
-function serveStatic(req, res) {
-  const requested = req.url === '/' ? '/index.html' : req.url;
+function serveStatic(req, res, requestPath) {
+  const requested = requestPath === '/' ? '/index.html' : requestPath;
   const filePath = path.join(PUBLIC_DIR, requested.replace(/^\//, ''));
   if (!filePath.startsWith(PUBLIC_DIR)) {
     sendText(res, 403, 'Forbidden');
@@ -566,18 +577,24 @@ function serveStatic(req, res) {
       '.css': 'text/css; charset=utf-8',
       '.json': 'application/json; charset=utf-8'
     }[ext] || 'application/octet-stream';
+    if (ext === '.html') {
+      const html = data.toString('utf8').replace(/__BASE_PATH__/g, BASE_PATH);
+      sendText(res, 200, html, contentType);
+      return;
+    }
     sendText(res, 200, data, contentType);
   });
 }
 
 const server = http.createServer(async (req, res) => {
   try {
-    if (req.method === 'GET' && req.url === '/api/health') {
+    const requestPath = normalizeRequestPath(req.url);
+    if (req.method === 'GET' && requestPath === '/api/health') {
       sendJson(res, 200, { ok: true, service: 'openclaw-agent-dashboard', time: new Date().toISOString() });
       return;
     }
 
-    if (req.method === 'GET' && req.url === '/api/overview') {
+    if (req.method === 'GET' && requestPath === '/api/overview') {
       const [statusRaw, sessionsRaw] = await Promise.all([
         runOpenClaw(['status', '--json']),
         runOpenClaw(['sessions', '--all-agents', '--json'])
@@ -588,7 +605,7 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
-    if (req.method === 'GET' && req.url === '/api/home') {
+    if (req.method === 'GET' && requestPath === '/api/home') {
       const [statusRaw, sessionsRaw] = await Promise.all([
         runOpenClaw(['status', '--json']),
         runOpenClaw(['sessions', '--all-agents', '--json'])
@@ -606,13 +623,13 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
-    if (req.method === 'GET' && req.url === '/api/tasks') {
+    if (req.method === 'GET' && requestPath === '/api/tasks') {
       const tasks = readTasks();
       sendJson(res, 200, { ...tasks, tasks: tasks.tasks.map(normalizeTask) });
       return;
     }
 
-    if (req.method === 'GET' && req.url === '/api/agents') {
+    if (req.method === 'GET' && requestPath === '/api/agents') {
       const [statusRaw, sessionsRaw] = await Promise.all([
         runOpenClaw(['status', '--json']),
         runOpenClaw(['sessions', '--all-agents', '--json'])
@@ -631,12 +648,12 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
-    if (req.method === 'GET' && req.url === '/api/activity') {
+    if (req.method === 'GET' && requestPath === '/api/activity') {
       sendJson(res, 200, readActivity());
       return;
     }
 
-    if (req.method === 'POST' && req.url === '/api/activity') {
+    if (req.method === 'POST' && requestPath === '/api/activity') {
       const body = await readBody(req);
       const input = parseJsonSafe(body, {});
       if (!input?.title) {
@@ -648,12 +665,12 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
-    if (req.method === 'GET' && req.url === '/api/trading') {
+    if (req.method === 'GET' && requestPath === '/api/trading') {
       sendJson(res, 200, readTrading());
       return;
     }
 
-    if (req.method === 'PATCH' && req.url === '/api/trading') {
+    if (req.method === 'PATCH' && requestPath === '/api/trading') {
       const body = await readBody(req);
       const input = parseJsonSafe(body, {});
       const trading = readTrading();
@@ -677,20 +694,20 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
-    if (req.method === 'GET' && req.url === '/api/automation') {
+    if (req.method === 'GET' && requestPath === '/api/automation') {
       const tasks = readTasks();
       const automation = readAutomation();
       sendJson(res, 200, { ...automation, nextTask: pickNextTask(tasks) });
       return;
     }
 
-    if (req.method === 'POST' && req.url === '/api/automation/tick') {
+    if (req.method === 'POST' && requestPath === '/api/automation/tick') {
       const result = await runAutomationTick();
       sendJson(res, 200, result);
       return;
     }
 
-    if (req.method === 'PATCH' && req.url === '/api/automation') {
+    if (req.method === 'PATCH' && requestPath === '/api/automation') {
       const body = await readBody(req);
       const input = parseJsonSafe(body, {});
       const automation = readAutomation();
@@ -705,7 +722,7 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
-    if (req.method === 'POST' && req.url === '/api/tasks') {
+    if (req.method === 'POST' && requestPath === '/api/tasks') {
       const body = await readBody(req);
       const input = parseJsonSafe(body, {});
       if (!input?.title) {
@@ -751,8 +768,8 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
-    if (req.method === 'PATCH' && req.url.startsWith('/api/tasks/')) {
-      const id = decodeURIComponent(req.url.split('/').pop());
+    if (req.method === 'PATCH' && requestPath.startsWith('/api/tasks/')) {
+      const id = decodeURIComponent(requestPath.split('/').pop());
       const body = await readBody(req);
       const input = parseJsonSafe(body, {});
       const tasks = readTasks();
@@ -783,7 +800,7 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
-    if (req.method === 'GET' && req.url === '/api/plan/backend-phase1') {
+    if (req.method === 'GET' && requestPath === '/api/plan/backend-phase1') {
       sendJson(res, 200, {
         objective: 'Extend the existing dashboard backend for Home / Agents / Tasks / Trading without a greenfield rewrite.',
         stores: {
@@ -817,12 +834,13 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
-    serveStatic(req, res);
+    serveStatic(req, res, requestPath);
   } catch (error) {
     sendJson(res, 500, { error: error.message || 'Internal server error' });
   }
 });
 
-server.listen(PORT, () => {
-  console.log(`OpenClaw Agent Dashboard running at http://127.0.0.1:${PORT}`);
+server.listen(PORT, HOST, () => {
+  const shownBase = BASE_PATH || '/';
+  console.log(`OpenClaw Agent Dashboard running at http://${HOST}:${PORT}${shownBase}`);
 });

@@ -3,8 +3,9 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>OpenClaw Agent Dashboard</title>
-    <link rel="stylesheet" href="/styles.css" />
+    <title>OpenClaw Console</title>
+    <script>window.__BASE_PATH__ = '__BASE_PATH__';</script>
+    <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <div class="app-shell">
@@ -205,6 +206,16 @@
               <div class="stack-list" id="executionQueue"></div>
             </section>
 
+            <section class="card panel trading-thesis-panel">
+              <div class="section-head">
+                <div>
+                  <h3>Selected thesis / detail</h3>
+                  <p class="muted small">一个选择驱动整个 Trading 页面，上下文在这里汇总。</p>
+                </div>
+              </div>
+              <div class="stack-list" id="tradingThesis"></div>
+            </section>
+
             <section class="card panel">
               <div class="section-head">
                 <div>
@@ -229,6 +240,6 @@
       </main>
     </div>
 
-    <script src="/app.js"></script>
+    <script src="app.js"></script>
   </body>
 </html>
