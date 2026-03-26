@@ -210,47 +210,45 @@ function renderTrading(data) {
   const tasks = [...(data.tasks?.tasks || [])];
   const agents = data.openclaw?.agentHealth || [];
   const tradingStore = data.pages?.trading || data.trading || {};
+
   const watchlist = (Array.isArray(tradingStore.watchlist) && tradingStore.watchlist.length
     ? tradingStore.watchlist.map((item, index) => ({
         id: item.id || `watch_${index}`,
         title: item.symbol || item.title || `Watch ${index + 1}`,
         status: item.bias || 'watch',
         owner: item.owner || 'trading-desk',
-        notes: item.summary || item.catalyst || 'Awaiting deeper market data',
+        notes: item.summary || item.catalyst || 'Awaiting deeper market data.',
         page: 'trading',
         priority: item.priority ?? 70,
         instrument: item.instrument || 'market',
-        timeframe: item.timeframe || 'active'
+        timeframe: item.timeframe || 'active',
+        nextAction: item.nextAction || 'Review setup'
       }))
-    : tasks
-        .filter((task) => task.status !== 'done')
-        .sort((a, b) => (b.priority ?? 0) - (a.priority ?? 0))
-        .slice(0, 4));
+    : tasks.filter((task) => task.status !== 'done').sort((a, b) => (b.priority ?? 0) - (a.priority ?? 0)).slice(0, 4));
+
   const executionQueue = (Array.isArray(tradingStore.executionQueue) && tradingStore.executionQueue.length
     ? tradingStore.executionQueue.map((item, index) => ({
         id: item.id || `queue_${index}`,
         title: item.symbol || item.title || `Queue ${index + 1}`,
         status: item.status || 'queued',
         owner: item.owner || 'trading-desk',
-        notes: item.trigger || item.summary || 'Waiting for trigger',
+        notes: item.trigger || item.summary || 'Waiting for trigger.',
         page: 'trading',
         priority: item.priority ?? 65,
         nextAction: item.nextAction || 'Review setup'
       }))
-    : tasks
-        .filter((task) => task.status === 'in_progress' || task.autoRun)
-        .sort((a, b) => (b.priority ?? 0) - (a.priority ?? 0))
-        .slice(0, 4));
+    : tasks.filter((task) => task.status === 'in_progress' || task.autoRun).sort((a, b) => (b.priority ?? 0) - (a.priority ?? 0)).slice(0, 4));
+
   const tradingTagged = tasks.filter((task) => task.page === 'trading' || /trading/i.test(task.owner || '') || /trading/i.test(task.title || ''));
   const alerts = [
     ...tasks.filter((task) => task.status === 'blocked').map((task) => ({
       title: task.title,
-      body: task.lastError || '需要人工处理',
+      body: task.lastError || 'Blocked task requiring intervention.',
       tone: 'red'
     })),
     ...agents.filter((agent) => agent.state === 'offline').map((agent) => ({
       title: `${agent.id} offline`,
-      body: '会影响研究到执行链路，需检查 runtime / gateway。',
+      body: 'Review runtime, gateway, or heartbeat connectivity for this agent.',
       tone: 'red'
     }))
   ].slice(0, 4);
@@ -259,22 +257,22 @@ function renderTrading(data) {
     {
       label: 'Priority queue',
       value: `${watchlist.length}`,
-      body: '当前由高优先级未完成任务代理 watchlist。'
+      body: 'Highest-priority watchlist items currently tracked by the desk.'
     },
     {
       label: 'Execution now',
       value: `${executionQueue.length}`,
-      body: '自动执行 + in_progress 任务组成当前执行队列。'
+      body: 'Queued and in-progress items moving toward execution.'
     },
     {
       label: 'Risk flags',
       value: `${alerts.length}`,
-      body: 'blocked task / offline agent 暂代风险与告警。'
+      body: 'Blocked tasks, offline agents, and risk conditions needing attention.'
     },
     {
       label: 'Trading hooks',
       value: `${tradingTagged.length}`,
-      body: '已和现有任务系统建立最小连接。'
+      body: 'Linked tasks and context feeding the trading workflow.'
     }
   ].map((item) => `
     <div class="summary-band">
@@ -285,7 +283,7 @@ function renderTrading(data) {
   `).join('');
 
   if (!selectedTradingItemId || !watchlist.some((item) => item.id === selectedTradingItemId)) {
-    selectedTradingItemId = watchlist[0]?.id || null;
+    selectedTradingItemId = watchlist[0]?.id || executionQueue[0]?.id || null;
   }
   const selectedTradingItem = watchlist.find((item) => item.id === selectedTradingItemId) || executionQueue.find((item) => item.id === selectedTradingItemId) || null;
 
@@ -293,19 +291,19 @@ function renderTrading(data) {
     title: task.title,
     badge: task.priority ?? '-',
     badgeTone: task.id === selectedTradingItemId ? 'green' : task.status,
-    body: `${task.owner || '-'} · ${task.status} · ${task.notes || '等待更具体的 market / thesis 数据'}`,
+    body: `${task.owner || '-'} � ${task.status} � ${task.notes || 'Waiting for richer market or thesis detail.'}`,
     active: task.id === selectedTradingItemId,
     dataId: task.id
-  }), '暂无 watchlist 数据，后续接 trading domain API。');
+  }), 'No watchlist data yet. Trading domain API can deepen this next.');
 
   renderCardList('executionQueue', executionQueue, (task) => ({
     title: task.title,
     badge: task.status,
     badgeTone: task.status,
-    body: `${task.owner || '-'} · ${task.nextAction || `autoRun ${task.autoRun ? 'on' : 'off'}`} · updated ${timeAgoFromIso(task.updatedAt)}`,
+    body: `${task.owner || '-'} � ${task.nextAction || `autoRun ${task.autoRun ? 'on' : 'off'}`} � updated ${timeAgoFromIso(task.updatedAt)}`,
     active: task.id === selectedTradingItemId,
     dataId: task.id
-  }), '目前没有活跃执行项。');
+  }), 'No active execution items right now.');
 
   const thesisRoot = document.getElementById('tradingThesis');
   if (thesisRoot) {
@@ -317,29 +315,28 @@ function renderTrading(data) {
             <span class="chip ${chipClass(selectedTradingItem.status || 'blue')}">${escapeHtml(selectedTradingItem.status || 'watch')}</span>
           </div>
           <p class="muted small"><strong>Owner:</strong> ${escapeHtml(selectedTradingItem.owner || '-')}</p>
-          <p class="muted small"><strong>Thesis:</strong> ${escapeHtml(selectedTradingItem.notes || '当前还没有完整 thesis，后续接 Trading domain API 与 Trading FE workflow。')}</p>
+          <p class="muted small"><strong>Thesis:</strong> ${escapeHtml(selectedTradingItem.notes || 'Current thesis detail is still shallow; backend trading data can deepen this next.')}</p>
           <p class="muted small"><strong>Next action:</strong> ${escapeHtml(selectedTradingItem.nextAction || 'Review setup / confirm trigger / link task')}</p>
-          <p class="muted small"><strong>Why now:</strong> ${escapeHtml(selectedTradingItem.timeframe || selectedTradingItem.instrument || 'active context')}</p>
+          <p class="muted small"><strong>Why now:</strong> ${escapeHtml(selectedTradingItem.timeframe || selectedTradingItem.instrument || 'Active context')}</p>
         </div>
       `
-      : '<div class="empty-state">先从 watchlist 选择一个对象，再在这里查看 thesis / next action。</div>';
+      : '<div class="empty-state">Select a watchlist or queue item to inspect the active thesis and next action.</div>';
   }
 
   renderCardList('linkedTasks', tradingTagged.length ? tradingTagged : watchlist, (task) => ({
     title: task.title,
-    badge: task.page || 'general',
-    badgeTone: 'blue',
-    body: task.resultSummary || task.notes || '当前先显示关联任务，后续再补 thesis / alerts / fills。'
-  }), '尚未发现 trading 关联任务。');
+    badge: task.page || 'trading',
+    badgeTone: task.status || 'blue',
+    body: `${task.owner || '-'} � ${task.notes || task.summary || 'Task linked to the trading workflow.'}`
+  }), 'No linked tasks yet.');
 
-  renderCardList('tradingAlerts', alerts, (item) => ({
-    title: item.title,
-    badge: 'alert',
-    badgeTone: item.tone,
-    body: item.body
-  }), '没有高优先级告警。');
+  renderCardList('tradingAlerts', alerts, (alert) => ({
+    title: alert.title,
+    badge: alert.tone === 'red' ? 'urgent' : 'watch',
+    badgeTone: alert.tone,
+    body: alert.body
+  }), 'No active trading alerts.');
 }
-
 function renderCardList(elementId, items, mapper, emptyText) {
   const root = document.getElementById(elementId);
   if (!root) return;
@@ -493,3 +490,4 @@ setInterval(async () => {
     await loadOverview();
   }
 }, 60000);
+
