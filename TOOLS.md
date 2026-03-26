@@ -63,6 +63,14 @@ Friendly natural-language aliases:
 Trade-facing default escalation:
 - research / monitor -> risk review -> guardian check -> orchestrator synthesis
 
+Additional seats now available:
+- `coo: <task>` -> COO
+- `security: <task>` -> Security
+- `hr: <task>` -> HR
+- `quant-pm: <task>` -> Quant PM
+- `quant-engineer: <task>` -> Quant Engineer
+- `polymarket-trader: <task>` -> Polymarket Trader
+
 Full routing examples live in `ROUTER_CHEATSHEET.md` and `TRADING_ORG.md`.
 
 Add whatever helps you do your job. This is your cheat sheet.

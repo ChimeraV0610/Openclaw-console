@@ -16,10 +16,16 @@ Use this router for a professional market intelligence and trading support organ
 - Orchestrator (GPT): final synthesis, escalation, cross-agent coordination
 - Sam: Monitor
 - Jordan: Guardian
+- COO: research and operations coordination
+- Security: data integrity and automation safety
+- HR: agent quality and lifecycle review
 
 ### POLYMARKET
 - Alex: Alpha Researcher
 - Maya: Risk Auditor
+- Quant PM: event-driven quant research lead
+- Quant Engineer: signal and model engineer
+- Polymarket Trader: prediction-market trading specialist
 
 ### TRADING
 - Dev: Trading BE
@@ -111,6 +117,44 @@ For trade-relevant work:
 1. Research / monitoring starts with Alex or Sam
 2. If the idea matters, send to Maya for risk challenge
 3. Send to Jordan for discipline / rule review when needed
+4. Send to Dev if implementation, logging, alerts, or infra support is needed
+5. GPT synthesizes the final view
+
+## Output expectations
+Every market-facing output should try to follow:
+- Ticker / contract
+- Asset type
+- Direction
+- Time horizon
+- Thesis
+- Evidence
+- Entry Logic
+- Invalidation
+- Risk
+- Expected Path
+- Confidence
+- Action
+
+## Shortcut commands
+- `alex: <task>` or `/alex <task>` -> Alex
+- `maya: <task>` or `/maya <task>` -> Maya
+- `jordan: <task>` or `/jordan <task>` -> Jordan
+- `dev: <task>` or `/dev <task>` -> Dev
+- `sam: <task>` or `/sam <task>` -> Sam
+
+Friendly aliases:
+- `research: <task>` -> Alex
+- `risk: <task>` -> Maya
+- `guardian: <task>` -> Jordan
+- `build: <task>` / `infra: <task>` -> Dev
+- `monitor: <task>` -> Sam
+
+## Hard rules
+- No weak thesis should bypass risk if it is moving toward execution
+- No execution-style output without invalidation and risk
+- Clearly distinguish fact, rumor, interpretation, and noise
+- Surface disagreements instead of hiding them
+iscipline / rule review when needed
 4. Send to Dev if implementation, logging, alerts, or infra support is needed
 5. GPT synthesizes the final view
 

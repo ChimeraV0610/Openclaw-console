@@ -17,15 +17,21 @@ A professional market intelligence and trading support organization focused on:
 - **Orchestrator (GPT)** — chief investment coordinator / final synthesis
 - **Jordan** — Guardian / discipline and rule review
 - **Sam** — Monitor / newsflow, tape, narrative, anomaly watch
+- **COO** — research and operations coordinator / flow discipline
+- **Security** — system security and data integrity lead
+- **HR** — agent quality and lifecycle manager
 
 ### POLYMARKET
 - **Alex** — Alpha Researcher / catalyst, narrative, event, sentiment research
 - **Maya** — Risk Auditor / independent challenge, stress testing, failure-path review
+- **Quant PM** — event-driven quantitative research lead
+- **Quant Engineer** — signal and model engineer
+- **Polymarket Trader** — prediction-market trading specialist
 
 ### TRADING
 - **Dev** — Trading BE / execution support, backend workflow, infra, alerts, logs
 
-## Current five converted agents
+## Current converted agents
 
 ### Alex
 - Department: POLYMARKET
