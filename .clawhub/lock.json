@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "skills": {
+    "self-improving": {
+      "version": "1.2.16",
+      "installedAt": 1774278901787
+    },
+    "word-docx": {
+      "version": "1.0.2",
+      "installedAt": 1774279082598
+    },
+    "docker-compose": {
+      "version": "1.0.0",
+      "installedAt": 1774279622156
+    }
+  }
+}

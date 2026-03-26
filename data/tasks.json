@@ -2,7 +2,7 @@
   "meta": {
     "version": 2,
     "defaultOwner": "gpt",
-    "updatedAt": "2026-03-23T02:30:38.200Z"
+    "updatedAt": "2026-03-23T02:40:00.000Z"
   },
   "tasks": [
     {
@@ -13,14 +13,14 @@
       "priority": 100,
       "autoRun": true,
       "notifyOnComplete": true,
-      "status": "in_progress",
+      "status": "done",
       "notes": "用于测试自动 tick 是否会把 todo 改成 in_progress",
       "startedAt": "2026-03-23T02:30:38.200Z",
-      "updatedAt": "2026-03-23T02:30:38.200Z",
+      "updatedAt": "2026-03-23T02:40:00.000Z",
       "createdAt": "2026-03-23T02:30:00.000Z",
-      "completedAt": null,
+      "completedAt": "2026-03-23T02:40:00.000Z",
       "lastError": "",
-      "resultSummary": "自动执行器已接管该任务"
+      "resultSummary": "自动任务心跳接管测试完成，任务已从 in_progress 正常推进到 done"
     },
     {
       "id": "task_block_test",
