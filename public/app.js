@@ -291,7 +291,7 @@ function renderTrading(data) {
     title: task.title,
     badge: task.priority ?? '-',
     badgeTone: task.id === selectedTradingItemId ? 'green' : task.status,
-    body: `${task.owner || '-'} � ${task.status} � ${task.notes || 'Waiting for richer market or thesis detail.'}`,
+    body: `${task.owner || '-'} � ${task.status} � ${task.notes || 'Waiting for richer market or thesis detail.'}`,
     active: task.id === selectedTradingItemId,
     dataId: task.id
   }), 'No watchlist data yet. Trading domain API can deepen this next.');
@@ -300,7 +300,7 @@ function renderTrading(data) {
     title: task.title,
     badge: task.status,
     badgeTone: task.status,
-    body: `${task.owner || '-'} � ${task.nextAction || `autoRun ${task.autoRun ? 'on' : 'off'}`} � updated ${timeAgoFromIso(task.updatedAt)}`,
+    body: `${task.owner || '-'} � ${task.nextAction || `autoRun ${task.autoRun ? 'on' : 'off'}`} � updated ${timeAgoFromIso(task.updatedAt)}`,
     active: task.id === selectedTradingItemId,
     dataId: task.id
   }), 'No active execution items right now.');
@@ -327,7 +327,7 @@ function renderTrading(data) {
     title: task.title,
     badge: task.page || 'trading',
     badgeTone: task.status || 'blue',
-    body: `${task.owner || '-'} � ${task.notes || task.summary || 'Task linked to the trading workflow.'}`
+    body: `${task.owner || '-'} � ${task.notes || task.summary || 'Task linked to the trading workflow.'}`
   }), 'No linked tasks yet.');
 
   renderCardList('tradingAlerts', alerts, (alert) => ({
@@ -376,38 +376,55 @@ function updateSidebar(data) {
 }
 
 async function loadOverview() {
-  const res = await fetch(apiPath('/api/overview'));
-  const data = await res.json();
+  const [overviewData, homeData, agentsData, tradingData] = await Promise.all([
+    fetch(apiPath('/api/overview')).then((r) => r.json()),
+    fetch(apiPath('/api/home')).then((r) => r.json()).catch(() => null),
+    fetch(apiPath('/api/agents')).then((r) => r.json()).catch(() => null),
+    fetch(apiPath('/api/trading')).then((r) => r.json()).catch(() => null)
+  ]);
+
+  const data = {
+    ...overviewData,
+    home: homeData || overviewData.home || null,
+    agentsPage: agentsData || overviewData.agentsPage || null,
+    trading: tradingData || overviewData.trading || null,
+    pages: {
+      ...(overviewData.pages || {}),
+      home: homeData || overviewData.pages?.home || null,
+      agents: agentsData || overviewData.pages?.agents || null,
+      trading: tradingData || overviewData.pages?.trading || null
+    }
+  };
+
   latestOverview = data;
 
-  const agents = data.openclaw?.agentHealth || [];
-  const summary = data.taskSummary || { completed: 0, pending: 0 };
+  const agents = data.openclaw?.agentHealth || data.agentsPage?.agents || [];
+  const summary = data.taskSummary || data.home?.summary || { completed: 0, pending: 0 };
   const primary = agents.find((agent) => agent.primary);
   const onlineCount = agents.filter((agent) => agent.state === 'working' || agent.state === 'online').length;
 
   document.getElementById('primaryAgent').textContent = primary?.id || '-';
   document.getElementById('onlineAgents').textContent = `${onlineCount}/${agents.length}`;
-  document.getElementById('doneTasks').textContent = summary.completed;
-  document.getElementById('pendingTasks').textContent = summary.pending;
+  document.getElementById('doneTasks').textContent = summary.completed ?? 0;
+  document.getElementById('pendingTasks').textContent = summary.pending ?? 0;
 
   const gateway = data.openclaw?.status?.gateway;
   const automation = data.automation || {};
   const nextTask = automation.nextTask;
   document.getElementById('gatewayStatus').textContent = gateway?.reachable
-    ? `Gateway 已连接 · ${gateway.url} · 自动模式: ${automation.enabled ? '开启' : '关闭'}${nextTask ? ` · 下一任务: ${nextTask.title}` : ''}`
-    : `Gateway 当前未直连（${gateway?.error || 'unknown'}）· 自动模式: ${automation.enabled ? '开启' : '关闭'}${nextTask ? ` · 下一任务: ${nextTask.title}` : ''}`;
+    ? `Gateway connected · ${gateway.url} · automation: ${automation.enabled ? 'on' : 'off'}${nextTask ? ` · next task: ${nextTask.title}` : ''}`
+    : `Gateway issue (${gateway?.error || 'unknown'}) · automation: ${automation.enabled ? 'on' : 'off'}${nextTask ? ` · next task: ${nextTask.title}` : ''}`;
 
-  document.getElementById('automationMode').textContent = automation.enabled ? '开启' : '关闭';
+  document.getElementById('automationMode').textContent = automation.enabled ? 'on' : 'off';
   document.getElementById('automationNextTask').textContent = nextTask
-    ? `当前选中任务：${nextTask.title}（${nextTask.status}）`
-    : '当前没有可自动执行的任务';
+    ? `Current next task: ${nextTask.title} (${nextTask.status})`
+    : 'No runnable automation task right now';
   document.getElementById('lastHeartbeat').textContent = timeAgoFromIso(automation.lastHeartbeatRunAt);
   document.getElementById('lastHeartbeatExact').textContent = automation.lastHeartbeatRunAt
-    ? `上次运行：${formatTime(automation.lastHeartbeatRunAt)} · 最近通知：${automation.lastNotificationAt ? formatTime(automation.lastNotificationAt) : '-'}`
-    : '还没有 heartbeat 记录';
-
+    ? `Last heartbeat: ${new Date(automation.lastHeartbeatRunAt).toLocaleString()} · Last notification: ${automation.lastNotificationAt ? new Date(automation.lastNotificationAt).toLocaleString() : '-'}`
+    : 'No heartbeat recorded yet';
   if (automationToggleBtn) {
-    automationToggleBtn.textContent = automation.enabled ? '关闭自动执行' : '开启自动执行';
+    automationToggleBtn.textContent = automation.enabled ? 'Disable automation' : 'Enable automation';
   }
 
   renderAgents(agents);
@@ -416,25 +433,6 @@ async function loadOverview() {
   renderTrading(data);
   updateSidebar(data);
 }
-
-async function updateTask(id, status) {
-  const patch = { status };
-  if (status === 'done') {
-    patch.completedAt = new Date().toISOString();
-    patch.resultSummary = '已手动标记完成';
-    patch.lastError = '';
-  }
-  if (status === 'blocked') {
-    patch.lastError = '需要人工处理或更多上下文';
-  }
-  await fetch(apiPath(`/api/tasks/${encodeURIComponent(id)}`), {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(patch)
-  });
-  await loadOverview();
-}
-window.updateTask = updateTask;
 
 taskForm.addEventListener('submit', async (event) => {
   event.preventDefault();
