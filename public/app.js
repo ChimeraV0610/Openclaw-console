@@ -33,7 +33,7 @@ const viewMeta = {
 let latestOverview = null;
 let currentView = 'home';
 let selectedTradingItemId = null;
-const BASE_PATH = (window.__BASE_PATH__ || '').replace(/\/$/, '');
+const BASE_PATH = (window.OPENCLAW_BASE_PATH || '').replace(/\/$/, '');
 const apiPath = (path) => `${BASE_PATH}${path}`;
 
 function ageLabel(ms) {
@@ -430,7 +430,7 @@ async function updateTask(id, status) {
   if (status === 'blocked') {
     patch.lastError = '需要人工处理或更多上下文';
   }
-  await fetch(`/api/tasks/${encodeURIComponent(id)}`, {
+  await fetch(apiPath(`/api/tasks/${encodeURIComponent(id)}`), {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(patch)
