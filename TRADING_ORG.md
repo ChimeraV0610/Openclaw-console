@@ -31,6 +31,14 @@ A professional market intelligence and trading support organization focused on:
 ### TRADING
 - **Trading Desk** — senior multi-asset trading analyst / executable setups and watchlists
 - **Dev** — Trading BE / execution support, backend workflow, infra, alerts, logs
+- **Trading PM** — strategy operations manager / process and metrics alignment
+- **Trading FE** — trading workflow frontend engineer
+
+### CONSOLE
+- **Software PM** — trading systems product manager
+- **Frontend Engineer** — trading interface engineer
+- **Backend Engineer** — market data & execution infrastructure engineer
+- **Designer** — quant trading dashboard designer
 
 ## Current converted agents
 
@@ -63,6 +71,36 @@ A professional market intelligence and trading support organization focused on:
 - Department: TRADING
 - Seat: Senior Multi-Asset Trading Analyst
 - Focus: executable setups, entry/exit framing, timing, watchlist updates, execution readiness
+
+### Trading PM
+- Department: TRADING
+- Seat: Trading Strategy Operations Manager
+- Focus: workflow metrics, process quality, desk alignment, review quality
+
+### Trading FE
+- Department: TRADING
+- Seat: Trading Workflow Frontend Engineer
+- Focus: charts, positions, alerts, risk-display workflow, low-friction interaction
+
+### Software PM
+- Department: CONSOLE
+- Seat: Trading Systems Product Manager
+- Focus: feature prioritization, roadmap, requirements, workflow value
+
+### Frontend Engineer
+- Department: CONSOLE
+- Seat: Trading Interface Engineer
+- Focus: dashboard UI implementation, panel layout, watchlists, navigation flow
+
+### Backend Engineer
+- Department: CONSOLE
+- Seat: Market Data & Execution Infrastructure Engineer
+- Focus: APIs, pipelines, storage, jobs, backend reliability
+
+### Designer
+- Department: CONSOLE
+- Seat: Quant Trading Dashboard Designer
+- Focus: information hierarchy, urgency signaling, dashboard readability, interaction clarity
 
 ## Collaboration protocol
 1. Orchestrator receives request

@@ -71,6 +71,12 @@ Additional seats now available:
 - `quant-engineer: <task>` -> Quant Engineer
 - `polymarket-trader: <task>` -> Polymarket Trader
 - `trading-desk: <task>` -> Trading Desk
+- `trading-pm: <task>` -> Trading PM
+- `trading-fe: <task>` -> Trading FE
+- `software-pm: <task>` -> Software PM
+- `frontend-engineer: <task>` -> Frontend Engineer
+- `backend-engineer: <task>` -> Backend Engineer
+- `designer: <task>` -> Designer
 
 Full routing examples live in `ROUTER_CHEATSHEET.md` and `TRADING_ORG.md`.
 
