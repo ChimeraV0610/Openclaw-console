@@ -70,7 +70,11 @@ Additional seats now available:
 - `quant-pm: <task>` -> Quant PM
 - `quant-engineer: <task>` -> Quant Engineer
 - `polymarket-trader: <task>` -> Polymarket Trader
+- `trading-desk: <task>` -> Trading Desk
 
 Full routing examples live in `ROUTER_CHEATSHEET.md` and `TRADING_ORG.md`.
+
+Add whatever helps you do your job. This is your cheat sheet.
+_ORG.md`.
 
 Add whatever helps you do your job. This is your cheat sheet.

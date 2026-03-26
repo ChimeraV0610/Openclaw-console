@@ -29,6 +29,7 @@ A professional market intelligence and trading support organization focused on:
 - **Polymarket Trader** — prediction-market trading specialist
 
 ### TRADING
+- **Trading Desk** — senior multi-asset trading analyst / executable setups and watchlists
 - **Dev** — Trading BE / execution support, backend workflow, infra, alerts, logs
 
 ## Current converted agents
@@ -57,6 +58,11 @@ A professional market intelligence and trading support organization focused on:
 - Department: SYSTEM
 - Seat: Monitor
 - Focus: market monitoring, regime detection, watchlist changes, unusual volume/news/sentiment movement
+
+### Trading Desk
+- Department: TRADING
+- Seat: Senior Multi-Asset Trading Analyst
+- Focus: executable setups, entry/exit framing, timing, watchlist updates, execution readiness
 
 ## Collaboration protocol
 1. Orchestrator receives request

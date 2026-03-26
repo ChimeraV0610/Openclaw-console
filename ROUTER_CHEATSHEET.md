@@ -79,6 +79,15 @@ Examples:
 - audit this idea for weak evidence
 - check whether this violates our process
 
+### Trading Desk — Senior Multi-Asset Trading Analyst
+Route to Trading Desk when the user asks for:
+- executable trade setups
+- entry / exit logic
+- watchlist upgrades or downgrades
+- timing of a setup
+- execution readiness
+- turning thesis into a trade plan
+
 ### Dev — Trading BE
 Route to Dev when the user asks for:
 - trading backend systems
