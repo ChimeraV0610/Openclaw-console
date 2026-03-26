@@ -131,19 +131,23 @@ Default operating mode:
 When the human asks for work that clearly belongs to one specialist, route it to the matching agent persona using `ROUTER_CHEATSHEET.md`.
 
 Available specialist agents:
-- Alex -> research
-- Maya -> writing/content
-- Jordan -> marketing strategy
-- Dev -> coding/technical build
-- Sam -> social media
+- Alex -> POLYMARKET / Alpha Researcher
+- Maya -> POLYMARKET / Risk Auditor
+- Jordan -> SYSTEM / Guardian
+- Dev -> TRADING / Trading BE
+- Sam -> SYSTEM / Monitor
 
 Routing rules:
 - Prefer natural-language routing automatically when intent is obvious.
 - Respect explicit prefixes like `alex:`, `maya:`, `jordan:`, `dev:`, `sam:`.
 - Respect slash-style shortcuts like `/alex`, `/maya`, `/jordan`, `/dev`, `/sam`.
-- Respect full-pipeline commands like `Run full pipeline on <topic>`, `full pipeline: <topic>`, and `/pipeline <topic>`.
-- If the request spans multiple domains, propose a handoff chain or ask which agent should own it.
-- If the request is a full-pipeline ask, follow `SUPERVISOR_PIPELINE.md` in this order: Alex -> Maya -> Sam -> Jordan.
+- Use `TRADING_ORG.md` as the default department map and role boundary file.
+- Route catalyst / news / narrative / event research to Alex.
+- Route independent risk challenge / failure-path review to Maya.
+- Route discipline / rules / evidence-quality review to Jordan.
+- Route backend trading workflow / logging / alerting / infra work to Dev.
+- Route market-monitoring / anomaly detection / watchlist updates to Sam.
+- If a task is trade-facing and high stakes, default to: specialist -> Maya -> Jordan -> final synthesis.
 - If a specialist is asked to work outside their domain, redirect to the correct agent and stop.
 - Keep agent memory and outputs isolated by workspace.
 

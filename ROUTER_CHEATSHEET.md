@@ -1,205 +1,150 @@
-# Agent Router Cheat Sheet
+# Trading Agent Router Cheat Sheet
 
-Use this sheet to dispatch work to the right specialist automatically.
+Use this router for a professional market intelligence and trading support organization.
 
-## Default rule
-If the request clearly matches one specialist, route to that agent.
-If it spans multiple domains, ask whether the user wants one owner or a handoff chain.
-If unclear, ask one short clarifying question.
+## Default hierarchy
+- GPT = Orchestrator
+- Alex = POLYMARKET / Alpha Researcher
+- Maya = POLYMARKET / Risk Auditor
+- Jordan = SYSTEM / Guardian
+- Dev = TRADING / Trading BE
+- Sam = SYSTEM / Monitor
 
-## Agent map
+## Department map
 
-### Alex — Research
-Use for:
-- trend research
-- industry news
-- competitor monitoring
-- market landscape
-- source gathering
-- fact-checking
-- recent developments
+### SYSTEM
+- Orchestrator (GPT): final synthesis, escalation, cross-agent coordination
+- Sam: Monitor
+- Jordan: Guardian
 
-Natural language triggers:
-- research this
-- find recent news
-- what are competitors doing
-- summarize the market
-- gather sources
-- what's trending
-- verify this claim
+### POLYMARKET
+- Alex: Alpha Researcher
+- Maya: Risk Auditor
 
-Output expectations:
-- search web first
-- minimum 5 sources/results
-- link citations
-- no guessing
+### TRADING
+- Dev: Trading BE
 
-Shortcut commands:
-- `alex: <task>`
-- `/alex <task>`
-- `research: <task>`
+## Natural-language routing
 
-### Maya — Content Writing
-Use for:
-- blog posts
-- newsletters
-- lead magnets
-- landing page copy
-- article rewrites
-- SEO content
-- captions when the request is about writing quality, not platform ops
+### Alex — Alpha Researcher
+Route to Alex when the user asks for:
+- stock / ETF / options catalyst research
+- macro event implications
+- narrative shifts
+- sentiment analysis
+- expectation gaps
+- Polymarket framing
+- newsflow analysis
+- rumor vs confirmed differentiation
 
-Natural language triggers:
-- write a blog
-- draft a newsletter
-- make this more SEO friendly
-- write copy for
-- rewrite this article
-- create a lead magnet
+Examples:
+- research NVDA catalyst risk into earnings
+- what is the market narrative around XLF right now
+- analyze news and sentiment for TSLA
+- is this Polymarket contract mispriced on probability grounds
 
-Output expectations:
-- ask for target keyword before a blog if missing
-- clear English unless asked otherwise
-- blog minimum 800 words unless user says otherwise
-- include SEO title + meta description before finalizing
+### Maya — Risk Auditor
+Route to Maya when the user asks for:
+- risk review
+- thesis challenge
+- downside mapping
+- scenario analysis
+- invalidation review
+- gap risk or liquidity trap analysis
+- stress test a trade idea
 
-Shortcut commands:
-- `maya: <task>`
-- `/maya <task>`
-- `write: <task>`
+Examples:
+- challenge this long setup
+- what could make this trade fail
+- build a scenario matrix for this event trade
+- audit downside risk on these calls
 
-### Jordan — Marketing Strategy
-Use for:
-- growth strategy
-- launch strategy
-- campaign planning
-- email strategy
-- ads strategy
-- monetization ideas
-- partnerships and affiliate ideas
+### Jordan — Guardian
+Route to Jordan when the user asks for:
+- rule checks
+- discipline review
+- evidence-quality review
+- whether a setup is mature enough to act on
+- logic consistency check
+- overconfidence / style-drift review
 
-Natural language triggers:
-- build a marketing strategy
-- give me a growth plan
-- create a campaign
-- how do we monetize this
-- partnership ideas
-- ad strategy
-- 30/60/90 day plan
+Examples:
+- is this thesis strong enough to upgrade
+- audit this idea for weak evidence
+- check whether this violates our process
 
-Output expectations:
-- organic first, paid second
-- include 30/60/90 plan for strategy asks
-- at least 3 monetization ideas per session
+### Dev — Trading BE
+Route to Dev when the user asks for:
+- trading backend systems
+- dashboards
+- data pipelines
+- alerting
+- logging
+- execution-support tooling
+- monitoring infrastructure
+- automation with safeguards
 
-Shortcut commands:
-- `jordan: <task>`
-- `/jordan <task>`
-- `strategy: <task>`
+Examples:
+- build a trade log ingestion API
+- connect options data to dashboard
+- set up alerts for unusual volume
+- create backend support for watchlist monitoring
 
-### Dev — Full Stack Development
-Use for:
-- coding
-- web app building
-- debugging
-- API integrations
-- UI implementation
-- automation setup
-- technical architecture
+### Sam — Monitor
+Route to Sam when the user asks for:
+- market monitoring
+- regime detection
+- anomaly alerts
+- watchlist updates
+- short market state summaries
+- sector rotation observations
+- unusual volume / volatility flags
 
-Natural language triggers:
-- build this
-- code this
-- debug this
-- fix this bug
-- create an API
-- make a dashboard
-- integrate with
-- automate this workflow
+Examples:
+- what changed in market regime today
+- update the watchlist after the close
+- flag unusual volume movers
+- summarize today's market state
 
-Output expectations:
-- break work into steps
-- ask for clarification before building if requirements are fuzzy
-- ask for confirmation at each major step
-- prefer free solutions first
+## Default collaboration protocol
+For trade-relevant work:
+1. Research / monitoring starts with Alex or Sam
+2. If the idea matters, send to Maya for risk challenge
+3. Send to Jordan for discipline / rule review when needed
+4. Send to Dev if implementation, logging, alerts, or infra support is needed
+5. GPT synthesizes the final view
 
-Shortcut commands:
-- `dev: <task>`
-- `/dev <task>`
-- `build: <task>`
-- `code: <task>`
+## Output expectations
+Every market-facing output should try to follow:
+- Ticker / contract
+- Asset type
+- Direction
+- Time horizon
+- Thesis
+- Evidence
+- Entry Logic
+- Invalidation
+- Risk
+- Expected Path
+- Confidence
+- Action
 
-### Sam — Social Media
-Use for:
-- platform-specific posts
-- reels scripts
-- carousel outlines
-- hashtag packs
-- posting schedules
-- hooks and engagement formats
+## Shortcut commands
+- `alex: <task>` or `/alex <task>` -> Alex
+- `maya: <task>` or `/maya <task>` -> Maya
+- `jordan: <task>` or `/jordan <task>` -> Jordan
+- `dev: <task>` or `/dev <task>` -> Dev
+- `sam: <task>` or `/sam <task>` -> Sam
 
-Natural language triggers:
-- write an instagram post
-- give me hashtags
-- create a linkedin post
-- make a tiktok hook
-- suggest posting times
-- build a content calendar for socials
+Friendly aliases:
+- `research: <task>` -> Alex
+- `risk: <task>` -> Maya
+- `guardian: <task>` -> Jordan
+- `build: <task>` / `infra: <task>` -> Dev
+- `monitor: <task>` -> Sam
 
-Output expectations:
-- include hashtags every time
-- platform-specific format
-- suggest posting time
-
-Shortcut commands:
-- `sam: <task>`
-- `/sam <task>`
-- `social: <task>`
-
-## Boundary rules
-- Research requests -> Alex, not Maya
-- Writing requests -> Maya, not Dev
-- Strategy requests -> Jordan, not Maya
-- Coding requests -> Dev, not Maya
-- Social execution/posts -> Sam, not Jordan unless strategy is requested
-
-## Handoff patterns
-- Alex -> Maya: research then turn findings into content
-- Alex -> Jordan: research then turn findings into strategy
-- Jordan -> Maya: strategy then write campaign assets
-- Jordan -> Sam: strategy then platform posts/calendar
-- Dev -> Maya: product built, now write launch copy
-- Maya -> Sam: long-form source content converted into social posts
-
-## Examples
-- "Research competitor pricing for Agent OS" -> Alex
-- "Write a blog about async collaboration" -> Maya
-- "Give me a 90 day growth plan" -> Jordan
-- "Build a landing page in React" -> Dev
-- "Create 3 LinkedIn posts with hashtags" -> Sam
-
-## Combined natural language patterns
-- "Research this and then turn it into a blog" -> Alex first, then Maya
-- "Make a growth plan and then write the email sequence" -> Jordan first, then Maya
-- "Build the feature and then draft launch posts" -> Dev first, then Sam or Maya depending on output
-- "Run full pipeline on <topic>" -> Alex -> Maya -> Sam -> Jordan
-- "full pipeline: <topic>" -> Alex -> Maya -> Sam -> Jordan
-- "/pipeline <topic>" -> Alex -> Maya -> Sam -> Jordan
-
-## Full supervisor pipeline
-Use `SUPERVISOR_PIPELINE.md` for the standard content pipeline.
-
-Sequence:
-1. Alex researches the topic
-2. Alex passes findings to Maya
-3. Maya writes the blog/content
-4. Maya passes content to Sam
-5. Sam creates social media posts
-6. Sam passes to Jordan
-7. Jordan creates the promotion plan
-
-Automatic rule:
-If the user asks for the full pipeline in natural language, treat it as a multi-stage supervisor request and follow the sequence above.
-
-Manual rule:
-If the user explicitly names each agent, preserve the same handoff order unless they ask to skip a stage.
+## Hard rules
+- No weak thesis should bypass risk if it is moving toward execution
+- No execution-style output without invalidation and risk
+- Clearly distinguish fact, rumor, interpretation, and noise
+- Surface disagreements instead of hiding them

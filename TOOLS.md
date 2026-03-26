@@ -47,24 +47,22 @@ Main orchestrator behavior:
 
 Use these quick command shortcuts for specialist routing:
 
-- `alex: <task>` or `/alex <task>` -> Alex (research)
-- `maya: <task>` or `/maya <task>` -> Maya (content writing)
-- `jordan: <task>` or `/jordan <task>` -> Jordan (marketing strategy)
-- `dev: <task>` or `/dev <task>` -> Dev (coding)
-- `sam: <task>` or `/sam <task>` -> Sam (social media)
+- `alex: <task>` or `/alex <task>` -> Alex (POLYMARKET / Alpha Researcher)
+- `maya: <task>` or `/maya <task>` -> Maya (POLYMARKET / Risk Auditor)
+- `jordan: <task>` or `/jordan <task>` -> Jordan (SYSTEM / Guardian)
+- `dev: <task>` or `/dev <task>` -> Dev (TRADING / Trading BE)
+- `sam: <task>` or `/sam <task>` -> Sam (SYSTEM / Monitor)
 
 Friendly natural-language aliases:
 - `research: <task>` -> Alex
-- `write: <task>` -> Maya
-- `strategy: <task>` -> Jordan
-- `build: <task>` / `code: <task>` -> Dev
-- `social: <task>` -> Sam
+- `risk: <task>` -> Maya
+- `guardian: <task>` -> Jordan
+- `build: <task>` / `infra: <task>` -> Dev
+- `monitor: <task>` -> Sam
 
-Supervisor pipeline kickoff:
-- `Run full pipeline on <topic>`
-- `full pipeline: <topic>`
-- `/pipeline <topic>`
+Trade-facing default escalation:
+- research / monitor -> risk review -> guardian check -> orchestrator synthesis
 
-Full routing examples live in `ROUTER_CHEATSHEET.md` and `SUPERVISOR_PIPELINE.md`.
+Full routing examples live in `ROUTER_CHEATSHEET.md` and `TRADING_ORG.md`.
 
 Add whatever helps you do your job. This is your cheat sheet.
