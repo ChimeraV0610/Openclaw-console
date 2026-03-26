@@ -153,19 +153,19 @@
                       "priority":  84,
                       "autoRun":  true,
                       "notifyOnComplete":  true,
-                      "status":  "todo",
+                      "status":  "done",
                       "notes":  "æ˜Žç¡®é€Ÿåº¦ã€å‘½ä¸­çŽ‡ã€é£Žé™©æ”¶ç›Šæ¯”ã€çºªå¾‹æ€§ã€å¤ç›˜è´¨é‡ç­‰æ ¸å¿ƒ KPIï¼Œå¹¶å®šä¹‰è¿› Home / Operations çš„å±•ç¤ºä¼˜å…ˆçº§ã€‚",
                       "acceptance":  [
                                          "åˆ—å‡º phase 1 å¯å±•ç¤ºçš„ KPI",
                                          "å®šä¹‰å“ªäº›æŒ‡æ ‡çŽ°åœ¨å¯åšï¼Œå“ªäº›ç•™åˆ° phase 2",
                                          "è¾“å‡ºé¢å‘ console çš„è¿è¥è§„åˆ™"
                                      ],
-                      "startedAt":  null,
-                      "updatedAt":  "2026-03-26T03:59:00.000Z",
+                      "startedAt":  "2026-03-26T04:55:00.000Z",
+                      "updatedAt":  "2026-03-26T04:55:00.000Z",
                       "createdAt":  "2026-03-26T03:59:00.000Z",
-                      "completedAt":  null,
+                      "completedAt":  "2026-03-26T04:55:00.000Z",
                       "lastError":  "",
-                      "resultSummary":  ""
+                      "resultSummary":  "Trading PM 已完成 PHASE1_TRADING_METRICS.md，定义了 phase 1 可展示 KPI、phase 2 延后指标、Home/Trading 的指标优先级，以及从 watch 到 ready/blocked/closed 的转化规则。"
                   },
                   {
                       "id":  "task_phase1_security_deploy_guardrails",
