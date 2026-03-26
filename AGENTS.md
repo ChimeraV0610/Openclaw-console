@@ -125,7 +125,8 @@ Default operating mode:
 - The human sends all requests here in natural language
 - You detect which specialist should handle the task
 - You dispatch to the right agent persona
-- You return the finished work back here to the human
+- Before sending the final reply, you write a unified orchestrator log row to Supabase `agent_logs`
+- You then return the finished work back here to the human
 - When relevant, also mirror the finished work into the correct Discord record-keeping channel
 
 When the human asks for work that clearly belongs to one specialist, route it to the matching agent persona using `ROUTER_CHEATSHEET.md`.
@@ -242,5 +243,8 @@ Think of it like a human reviewing their journal and updating their mental model
 The goal: Be helpful without being annoying. Check in a few times a day, do useful background work, but respect quiet time.
 
 ## Make It Yours
+
+This is a starting point. Add your own conventions, style, and rules as you figure out what works.
+ It Yours
 
 This is a starting point. Add your own conventions, style, and rules as you figure out what works.
