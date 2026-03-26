@@ -176,19 +176,19 @@
                       "priority":  82,
                       "autoRun":  true,
                       "notifyOnComplete":  true,
-                      "status":  "todo",
+                      "status":  "done",
                       "notes":  "ç¡®è®¤ canonical æœ¬åœ°è·¯å¾„ã€Dev è‰ç¨¿è·¯å¾„ã€VPS live served path çš„è¾¹ç•Œï¼›è¯„ä¼° BASE_PATHã€è®¤è¯ã€æ—¥å¿—å’Œå®‰å…¨æš´éœ²é—®é¢˜ã€‚",
                       "acceptance":  [
                                          "æ˜Žç¡® live served path é£Žé™©",
                                          "ç»™å‡ºæœ€å°å®‰å…¨å»ºè®®",
                                          "è¾“å‡º phase 1 éƒ¨ç½² guardrails"
                                      ],
-                      "startedAt":  null,
-                      "updatedAt":  "2026-03-26T03:59:00.000Z",
+                      "startedAt":  "2026-03-26T05:05:00.000Z",
+                      "updatedAt":  "2026-03-26T05:05:00.000Z",
                       "createdAt":  "2026-03-26T03:59:00.000Z",
-                      "completedAt":  null,
+                      "completedAt":  "2026-03-26T05:05:00.000Z",
                       "lastError":  "",
-                      "resultSummary":  ""
+                      "resultSummary":  "Security 已完成 PHASE1_SECURITY_GUARDRAILS.md，明确 canonical/workspace-dev/VPS live path 边界、HOST/BASE_PATH 风险、raw Node 暴露风险，以及 phase 1 最小部署与访问控制 guardrails。"
                   },
                   {
                       "id":  "task_phase1_coo_handoff_plan",
