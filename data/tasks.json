@@ -15,7 +15,7 @@
       "priority": 100,
       "autoRun": true,
       "notifyOnComplete": true,
-      "status": "in_progress",
+      "status": "done",
       "notes": "总控协调 Frontend Engineer、Backend Engineer、Designer、Software PM 等，确保 canonical 主线为 workspace-gpt。",
       "acceptance": [
         "四个核心页面优先级明确",
@@ -23,11 +23,11 @@
         "整合输出回到 Telegram"
       ],
       "startedAt": "2026-03-26T03:59:00.000Z",
-      "updatedAt": "2026-03-26T04:16:00.000Z",
+      "updatedAt": "2026-03-26T04:26:00.000Z",
       "createdAt": "2026-03-26T03:59:00.000Z",
-      "completedAt": null,
+      "completedAt": "2026-03-26T04:26:00.000Z",
       "lastError": "",
-      "resultSummary": "已建立 PHASE1_COORDINATION.md 与 PHASE1_HANDOFF_RUNBOOK.md，明确四个核心页面优先级、角色分工、交接顺序、blocker 升级规则与最小交付物。"
+      "resultSummary": "总控协调基线已完成：已输出 PHASE1_COORDINATION.md 与 PHASE1_HANDOFF_RUNBOOK.md，明确四页优先级、角色边界、交接顺序与 blocker 升级规则，后续可按任务板分别推进 PM/Design/Backend/Frontend。"
     },
     {
       "id": "task_phase1_software_pm_scope",
